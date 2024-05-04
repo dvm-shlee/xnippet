@@ -1,0 +1,21 @@
+# default configuration for brkraw
+snippets:
+  repo:
+  - name: xnippy
+    url: https://github.com/xoani/xnippy.git
+    plugin:
+      path: plugin
+      template: 
+      - template_plugin
+    preset:
+      path: preset
+      template: 
+      - template_preset
+    spec:
+      path: spec
+      template:
+      - template_spec
+    recipe:
+      path: recipe
+      template:
+      - template_recipe
