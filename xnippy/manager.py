@@ -9,16 +9,16 @@ from __future__ import annotations
 import yaml
 import shutil
 import warnings
+from packaging import version
 from pathlib import Path
 from .fetcher import SnippetsFetcher
 from typing import TYPE_CHECKING
-from brkraw.api.config.formatter import PathFormatter
-from brkraw.api.config.formatter import IOFormatter
+from .formatter import PathFormatter
+from .formatter import IOFormatter
 if TYPE_CHECKING:
     from .types import SnippetMode, StorageMode, SnippetPath, SnippetType
-    from .types import SnippetsFetcherType
-    from typing import List, Union, Optional
-
+    from .types import SnippetsFetcherType, VersionType
+    from typing import List, Dict, Union, Optional
 
 class Manager(PathFormatter):
     """Manages the configuration settings for the application.
@@ -28,12 +28,21 @@ class Manager(PathFormatter):
     depending on the user's choice and the operational context.
     """ 
     config: dict = {}
-    _package_name: str = 'brkraw'
-    _default_tmpdir_name: str ='.tmp'
-    _fetchers: dict = {}
+    _home_dir: 'Path'
+    _default_dir: 'Path'
+    _local_dir: 'Path'
+    _global_dir: 'Path'
+    _fname: str
+    _package_name: str
+    _package_version: VersionType
+    _fetchers: Dict[SnippetsFetcherType] = {}
     _compatible_snippets: List[SnippetMode] = ['plugin']
     
-    def __init__(self, tmpdir: Optional[Path] = None) -> None:
+    def __init__(self, 
+                 package_name: str, 
+                 package_version: str, 
+                 package__file__: 'Path',
+                 config_filename: Optional[str] = None) -> None:
         """Initializes the configuration manager.
 
         This constructor sets up paths for the home directory, global and local configuration directories,
@@ -43,12 +52,13 @@ class Manager(PathFormatter):
         Args:
             tmpdir (Optional[Path]): Temporary directory for storing configurations, defaults to the home directory.
         """
+        self._package_name = package_name
         self._home_dir = self._resolve('~')
-        self._default_dir = self._resolve(__file__).parent
+        self._default_dir = self._resolve(package__file__).parent
         self._local_dir = self._resolve(Path.cwd() / f'.{self._package_name}')
         self._global_dir = self._resolve(self._home_dir / f'.{self._package_name}')
-        self._fname = 'config.yaml'
-        self._tmpdir = self._resolve(tmpdir) if tmpdir else self._resolve(self._home_dir / self._default_tmpdir_name)
+        self._fname = config_filename or 'config.yaml'
+        self._package_version = version.parse(package_version)
         self.reload()
 
     @property
@@ -149,8 +159,8 @@ class Manager(PathFormatter):
             Tuple[Path, bool]: A tuple containing the path to the directory and a cache flag indicating
                                 if caching is necessary (True if so).
         """
-        path, cache = (self.config_dir / type_, False) if self.created else (self._tmpdir, True)
-        if not path.exists():
+        path, cache = (self.config_dir / type_, False) if self.created else (None, True)
+        if path and not path.exists():
             path.mkdir()
         return path, cache
     

@@ -10,7 +10,7 @@ from .snippet import PresetSnippet
 from .snippet import RecipeSnippet
 from .snippet import SpecSnippet
 from .formatter.recipe import Resource    
-
+from packaging.version import _Version as VersionType
 
 ResourceType = Type[Union[Resource, List[Resource]]]
 
@@ -42,6 +42,7 @@ RecipeSnippetType = Type[RecipeSnippet]
 SpecSnippetType = Type[SpecSnippet]
 
 __all__ = [
+    'VersionType',
     'ConfigManagerType', 'StorageMode',
     'FetcherType', 'SnippetsFetcherType', 
     'SnippetType', 'SnippetPath', 'SnippetMode', 'FileSnippetMode', 'ConfigSnippetMode',

@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xnippy"
+dynamic = ["version"]
+description = "A Python module for dynamic integration and management of extensible code snippets."
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10"
+]
+keywords = ["code snippets", "extensible", "plugin", "dynamic loading"]
+maintainers = [{name = "SungHo Lee", email = "shlee@unc.edu"}]
+requires-python = ">=3.7"
+dependencies = [
+    "pyyaml>=6.0.1",
+    "numpy>=1.18.0",
+    "tqdm>=4.66.1"
+]
+
+[project.urls]
+Homepage = "https://xoani.github.io"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "flake8>=3.8",
+    "mypy",
+    "black"
+]
+
+[tool.hatch.version]
+path = "xnippy/__init__.py"
+style = "pep440"
+
+# [project.scripts]
+# xnippy-cli = "xnippy.scripts.cli:main"

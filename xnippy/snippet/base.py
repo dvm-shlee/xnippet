@@ -2,7 +2,7 @@
 """
 
 from __future__ import annotations
-from xnippy.formatter import Fetcher
+from xnippy.fetcher.base import Fetcher
 from typing import TYPE_CHECKING
 from packaging.version import parse
 if TYPE_CHECKING:

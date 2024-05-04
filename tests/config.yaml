@@ -4,18 +4,18 @@ snippets:
   - name: xnippy
     url: https://github.com/xoani/xnippy.git
     plugin:
-      path: plugin
+      path: examples/plugin
       template: 
       - template_plugin
     preset:
-      path: preset
+      path: examples/preset
       template: 
       - template_preset
     spec:
-      path: spec
+      path: examples/spec
       template:
       - template_spec
     recipe:
-      path: recipe
+      path: examples/recipe
       template:
       - template_recipe

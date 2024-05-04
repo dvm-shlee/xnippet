@@ -52,7 +52,7 @@ class Snippets(Fetcher):
         """
         self.repos = repos
         self.mode = mode
-        self.path = self._resolve(path[0])
+        self.path = self._resolve(path[0]) if path[0] else path[0]
         self.is_cache = path[1]
         self._set_auth()
         self._fetch_local_contents()
