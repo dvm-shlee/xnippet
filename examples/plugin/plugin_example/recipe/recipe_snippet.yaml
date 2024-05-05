@@ -1,0 +1,21 @@
+package: xnippy>=0.1.0
+plugin: plugin_example
+recipe:
+  name: customer_info_aggregator
+  version: 1.0
+
+  classifier:
+    customer_info:
+      customer_name: profile.name
+      email_address: profile.email
+      second_order:
+        key: profile.orders
+        idx: 1
+      address: details.address
+      phone_number: details.phone
+      preferred_contact_method:
+        key: details.preferred_contact
+        where: email  # This assumes a function or mechanism to select 'email' if available
+      reward_points:
+        loyalty_points: profile.loyalty_points
+        script: "loyalty_points / 10"  # Converts loyalty points into rewards

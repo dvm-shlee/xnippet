@@ -13,6 +13,7 @@ Classes:
 from __future__ import annotations
 import os
 import warnings
+from xnippy.raiser import WarnRaiser
 from pathlib import Path
 from .base import Fetcher
 from xnippy.snippet import PlugInSnippet, RecipeSnippet, SpecSnippet, PresetSnippet
@@ -50,13 +51,39 @@ class Snippets(Fetcher):
             mode (Literal['plugin', 'preset', 'spec', 'recipe']): The operational mode determining the type of snippets to manage.
             path (Tuple[Optional[Path], bool], optional): A tuple containing the path to local storage and a boolean indicating cache usage.
         """
-        self.repos = repos
+        self._repos = self._inspect_repos(repos)
         self.mode = mode
         self.path = self._resolve(path[0]) if path[0] else path[0]
         self.is_cache = path[1]
         self._set_auth()
         self._fetch_local_contents()
-        self._template = [c[mode]['template'] for c in repos if 'template' in c[mode]]
+        # self._parse_templates()
+        # self._template = [c[mode]['template'] for c in repos if 'template' in c[mode]]
+        
+    def _parse_template(self):
+        
+        pass
+        
+    def _inspect_repos(self, repos):
+        inspected = {}
+        for repo in repos:
+            # Check if both 'name' and 'url' keys exist in the repo dictionary
+            name = repo.get('name')
+            url = repo.get('url')
+            
+            if not name or not url:
+                message = f"Given repo '{name}' in configuration file does not comply with the expected configuration."
+                WarnRaiser(self._inspect_repos).custom(message, UserWarning)
+                inspected[name] = None
+            else:
+                inspected[name] = repo
+
+        # Filter out None values and return the list of valid repos
+        filtered_repo = [repo for repo in inspected.values() if repo is not None]
+        if not filtered_repo:
+            message = "No valid repo configurations remain; nothing to download."
+            WarnRaiser(self._inspect_repos).custom(message, UserWarning)
+        return filtered_repo
         
     def _fetch_local_contents(self) -> Optional[list]:
         """Fetches snippets from local storage based on the current mode and path settings.
@@ -83,12 +110,12 @@ class Snippets(Fetcher):
         Retrieves snippet data from remote sources as specified by the repository configuration
         and converts them into snippet objects. Updates the fetched status upon completion.
         """
-        if self.repos:
-            contents = [self._walk_github_repo(repo_url=repo['url'],
-                                               path=repo[self.mode]['path'],
-                                               auth=self._auth[i]) for i, repo in enumerate(self.repos)]
-            self._convert_contents_to_snippets(contents=contents, remote=True)
-            self._fetched = True        
+        if self._repos:
+            if contents := [self._walk_github_repo(repo_url=repo['url'],
+                                                   path=repo[self.mode]['path'],
+                                                   auth=self._auth[i]) for i, repo in enumerate(self._repos)]:
+                self._convert_contents_to_snippets(contents=contents, remote=True)
+            self._fetched = True
             
     def _convert_contents_to_snippets(self, contents: list, remote: bool = False) -> None:
         """Converts fetched contents from either local or remote sources into snippet objects.
@@ -123,13 +150,15 @@ class Snippets(Fetcher):
         """
         if not snippet.is_valid:
             return None
-        if self._is_template(repo_id, snippet) and \
-            snippet.name not in [s.name for s in self._template_snippets]:
-            self._template_snippets.append(snippet)
-        elif not self._is_template(repo_id, snippet) and \
-            snippet.name not in [s.name for s in self._remote_snippets]:
+        # if self._is_template(repo_id, snippet) and \
+        #     snippet.name not in [s.name for s in self._template_snippets]:
+        #     self._template_snippets.append(snippet)
+        # elif not self._is_template(repo_id, snippet) and \
+        #     snippet.name not in [s.name for s in self._remote_snippets]:
+        #     self._remote_snippets.append(snippet)
+        elif snippet.name not in [s.name for s in self._remote_snippets]:
             self._remote_snippets.append(snippet)
-            
+        
     @property
     def _snippet(self):
         """Determines the snippet class based on the operational mode.

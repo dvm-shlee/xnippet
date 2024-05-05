@@ -1,0 +1,11 @@
+package: xnippy>=0.1.0
+plugin: plugin_example
+preset:
+  name: valuepairs
+  collection:
+  - name: "a=1, b=2"
+    a: 1
+    b: 2
+  - name: "a=3, b=4"
+    a: 3
+    b: 4

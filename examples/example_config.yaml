@@ -1,0 +1,9 @@
+# default configuration for brkraw
+plugin:
+  repo:
+  - name: xnippy
+    url: https://github.com/xoani/xnippy.git
+    plugin:
+      path: examples/plugin
+      template:
+      - plugin_template

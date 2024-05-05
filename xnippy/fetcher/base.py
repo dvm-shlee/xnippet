@@ -33,7 +33,7 @@ class Fetcher(PathFormatter):
         repos (dict): Configuration for the repositories to be accessed.
     """
     _auth: Union[List[Tuple[str, str]], Tuple[str, str]]
-    repos: dict
+    _repos: dict
     
     @staticmethod
     def is_connected():
@@ -43,7 +43,7 @@ class Fetcher(PathFormatter):
             bool: True if the connection is successful, False otherwise.
         """
         try:
-            Fetcher._fetch_from_url('https://api.github.com')
+            Fetcher._fetch_from_url("https://api.github.com")
         except (requests.ConnectTimeout, requests.ConnectionError, requests.RequestException):
             return False
         return True
@@ -53,8 +53,8 @@ class Fetcher(PathFormatter):
 
         Extracts and sets authentication details for each repository from the provided configurations.
         """
-        if isinstance(self.repos, list):
-            self._auth = [self._fetch_auth(repo) for repo in self.repos]
+        if isinstance(self._repos, list):
+            self._auth = [self._fetch_auth(repo) for repo in self._repos]
     
     @staticmethod
     def _fetch_auth(repo_dict: dict):
@@ -99,16 +99,16 @@ class Fetcher(PathFormatter):
         Yields:
             dict: A dictionary containing the path, directories, and files within the directory.
         """
-        contents = Fetcher._fetch_from_url(url=url, auth=auth).json()
-        dirs, files = Fetcher._fetch_directory_contents(contents)
-        yield {'path':path, 
-               'dirs':{d['name']:d['url'] for d in dirs}, 
-               'files':{f['name']:f['download_url'] for f in files}}
+        if contents := Fetcher._fetch_from_url(url=url, auth=auth):
+            dirs, files = Fetcher._fetch_directory_contents(contents.json())
+            yield {'path':path, 
+                    'dirs':{d['name']:d['url'] for d in dirs}, 
+                    'files':{f['name']:f['download_url'] for f in files}}
 
-        for dir in dirs:
-            new_path = f"{path}/{dir['name']}" if path else dir['name']
-            new_url = dir['url']
-            yield from Fetcher._walk_dir(url=new_url, path=new_path, auth=auth)
+            for dir in dirs:
+                new_path = f"{path}/{dir['name']}" if path else dir['name']
+                new_url = dir['url']
+                yield from Fetcher._walk_dir(url=new_url, path=new_path, auth=auth)
     
     @staticmethod
     def _fetch_directory_contents(contents):
@@ -121,7 +121,7 @@ class Fetcher(PathFormatter):
             tuple: A tuple containing lists of directories and files.
         """
         dirs, files = [], []
-        for i, item in enumerate(contents):
+        for item in contents:
             if item['type'] == 'dir':
                 dirs.append(item)
             elif item['type'] == 'file':
@@ -139,12 +139,15 @@ class Fetcher(PathFormatter):
         Returns:
             str: A constructed API endpoint URL based on the repository details.
         """
-        ptrn_github = r'https://(?:[^/]+\.)?github\.com/(?P<owner>[^/]+)/(?P<repo>[^/.]+)(?:\.git])?'
+        ptrn_github = r'https://(?:[^/]+\.)?github\.com/(?P<owner>[^/]+)/(?P<repo>[^/.]+)(?:\.git)?(?:/(?P<path>.*))?'
         if matched := re.match(ptrn_github, repo_url):
             owner = matched['owner']
             repo = matched['repo']
-            return f"https://api.github.com/repos/{owner}/{repo}/contents/{path}" if path \
-                else f"https://api.github.com/repos/{owner}/{repo}/contents"
+            if matched['path']:
+                path_ = matched['path']
+            path = '/'.join([path_, path]) if path_ else path
+            url = f"https://api.github.com/repos/{owner}/{repo}/contents"
+            return f"{url}/{path}" if path else url
     
     @staticmethod
     def _fetch_from_url(url: str, auth: Tuple[str, str] = None) -> Optional[requests.Response]:
@@ -185,3 +188,34 @@ class Fetcher(PathFormatter):
         except requests.RequestException as e:
             warnings.warn(f'Error downloading the file: {e}')
             return False
+
+
+# import requests
+
+# # Your personal access token
+# token = 'your_github_token_here'
+
+# # API URL for creating a file in a repository
+# url = "https://api.github.com/repos/username/repository/contents/path/to/file"
+
+# # The content of the file you want to push
+# content = {
+#     "message": "Commit message",
+#     "committer": {
+#         "name": "Your Name",
+#         "email": "your_email@example.com"
+#     },
+#     "content": "bXkgbmV3IGZpbGUgY29udGVudHM=",  # This is base64 encoded content
+#     "branch": "main"  # Or any other branch
+# }
+
+# # Make the HTTP request
+# headers = {'Authorization': f'token {token}'}
+# response = requests.put(url, json=content, headers=headers)
+
+# # Check the response
+# if response.status_code == 201:
+#     print("Successfully created the file.")
+# else:
+#     print("Failed to create the file.")
+#     print("Response:", response.content)

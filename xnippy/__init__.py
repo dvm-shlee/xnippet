@@ -1,4 +1,4 @@
-from .manager import Manager
+from .main import Xnippy
 
-__all__ = ['Manager']
+__all__ = ['Xnippy']
 __version__ = '0.1.0'

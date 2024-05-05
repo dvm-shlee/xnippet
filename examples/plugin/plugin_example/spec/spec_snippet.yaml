@@ -1,0 +1,68 @@
+package: xnippy>=0.1.0
+plugin: plugin_example
+spec:
+  name: spec_snippet
+  version: 0.0.1
+
+  fields:
+    name:
+      description: "Name of person"
+      validation:
+        type: string
+        pattern: "^[a-zA-Z]+ [a-zA-Z]+$"
+        pattern_description: "FirstName LastName"
+      optional: false
+
+    favorite_fruit:
+      description: "Favorite fruit among apple, banana, orange, pineapple"
+      validation:
+        type: string
+        allowed_values:
+          - apple
+          - banana
+          - orange
+          - pineapple
+      optional: true
+
+    email:
+      description: "Email address of the person"
+      validation:
+        type: string
+        pattern: "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        pattern_description: "Valid email format"
+      optional: false
+
+    age:
+      description: "Age of the person, must be an integer between 18 and 99"
+      validation:
+        type: integer
+        range:
+          min: 18
+          max: 99
+      optional: false
+
+    date_of_birth:
+      description: "Date of birth in YYYY-MM-DD format"
+      validation:
+        type: date
+        pattern: "^\d{4}-\d{2}-\d{2}$"
+        pattern_description: "YYYY-MM-DD"
+      optional: true
+
+    newsletter_subscribed:
+      description: "Whether the person is subscribed to the newsletter"
+      validation:
+        type: boolean
+        allowed_values:
+          - true
+          - false
+      optional: true
+
+    hobbies:
+      description: "List of hobbies, up to 5, as strings"
+      validation:
+        type: list
+        item_type: string
+        max_items: 5
+      optional: true
+      multiple: true

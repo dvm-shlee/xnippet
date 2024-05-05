@@ -6,4 +6,4 @@ from .string import String as StringFormatter
 from .bytes import Bytes as BytesFormatter
 
 
-__all__ = ['PathFormatter', 'IOFormatter', 'DateTimeFormatter', 'RecipeFormatter', 'StringFormatter', 'BytesFormatter']
+__all__ = ['PathFormatter', 'IOFormatter', 'DateTimeFormatter', 'StringFormatter', 'BytesFormatter']

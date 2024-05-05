@@ -15,12 +15,13 @@ from .fetcher import SnippetsFetcher
 from typing import TYPE_CHECKING
 from .formatter import PathFormatter
 from .formatter import IOFormatter
+from .raiser import WarnRaiser
 if TYPE_CHECKING:
     from .types import SnippetMode, StorageMode, SnippetPath, SnippetType
     from .types import SnippetsFetcherType, VersionType
     from typing import List, Dict, Union, Optional
 
-class Manager(PathFormatter):
+class Xnippy(PathFormatter):
     """Manages the configuration settings for the application.
 
     This class ensures the existence of the configuration directory, loads or creates the configuration file,
@@ -41,8 +42,9 @@ class Manager(PathFormatter):
     def __init__(self, 
                  package_name: str, 
                  package_version: str, 
-                 package__file__: 'Path',
-                 config_filename: Optional[str] = None) -> None:
+                 package__file__: Union['Path', str],
+                 config_path: Optional[str] = None,
+                 config_filename: str = 'config.yaml') -> None:
         """Initializes the configuration manager.
 
         This constructor sets up paths for the home directory, global and local configuration directories,
@@ -54,15 +56,26 @@ class Manager(PathFormatter):
         """
         self._package_name = package_name
         self._home_dir = self._resolve('~')
-        self._default_dir = self._resolve(package__file__).parent
+        self._default_dir = self._resolve(config_path) if config_path else self._resolve(package__file__).parent
         self._local_dir = self._resolve(Path.cwd() / f'.{self._package_name}')
         self._global_dir = self._resolve(self._home_dir / f'.{self._package_name}')
-        self._fname = config_filename or 'config.yaml'
+        self._fname = config_filename
         self._package_version = version.parse(package_version)
-        self.reload()
+        self.reload_config()
+
+    def reload_config(self) -> None:
+        """Loads an existing configuration file or creates a new one if it does not exist, filling the 'config' dictionary with settings."""
+        config_file = self.config_dir / self._fname
+        if not config_file.exists() and self.config_dir == self._default_dir:
+            warnings.warn(f"Config file is not exists in '{self.config_dir}', preparing Xnippy's default configuration.", 
+                          UserWarning)
+            config_file = self._resolve(__file__).parent / 'yaml/config.yaml'
+        with open(config_file, 'r') as f:
+            self.config = yaml.safe_load(f)
+        self._reload_fetchers()
 
     @property
-    def created(self) -> Union[StorageMode, list[str], bool]:
+    def config_created(self) -> Union[StorageMode, list[str], bool]:
         """"Checks and returns the location where the configuration folder was created.
 
         Returns:
@@ -81,42 +94,34 @@ class Manager(PathFormatter):
         Returns:
             Path: Path to the configuration directory based on its existence and scope (global or local).
         """
-        if isinstance(self.created, list):
+        if isinstance(self.config_created, list):
             return self._local_dir
-        elif isinstance(self.created, str):
-            return self._local_dir if self.created == 'local' else self._global_dir
+        elif isinstance(self.config_created, str):
+            return self._local_dir if self.config_created == 'local' else self._global_dir
         return self._default_dir
-
-    def reload(self) -> None:
-        """Loads an existing configuration file or creates a new one if it does not exist, filling the 'config' dictionary with settings."""
-        with open(self.config_dir / self._fname) as f:
-            self.config = yaml.safe_load(f)
-        self._reload_fetchers()
     
-    def create(self, target: StorageMode = 'local', 
-               force: bool = False) -> bool:
-        """Creates a configuration file at the specified location.
+    def create_confnig(self, target: StorageMode = 'local', 
+                       force: bool = False) -> bool:
+        """Creates a configuration file at the specified target location.
 
         Args:
-            target (Literal['local', 'global']): Target directory for creating the configuration file, defaults to 'local'.
-            force (bool): If True, overwrites the existing configuration file, defaults to False.
+            target (str): Specifies the target directory ('local' or 'global') for creating the configuration file. Defaults to 'local'.
+            force (bool): If set to True, the existing configuration file will be overwritten. Defaults to False.
 
         Returns:
-            bool: True if the file was created successfully, False otherwise.
+            bool: Returns True if the file was successfully created, otherwise False.
         """
-        if not self.config:
-            self.load()
         config_dir = self._local_dir if target == 'local' else self._global_dir
         config_dir.mkdir(exist_ok=True)
         config_file = config_dir / self._fname
         if config_file.exists():
             if not force:
-                self._warnings_exists()
+                WarnRaiser(self.create_confnig).config_exist_when_create()
                 return False
         with open(config_dir / self._fname, 'w') as f:
             yaml.safe_dump(self.config, f, sort_keys=False)
-
-    def remove(self, target: StorageMode, yes: bool = False):
+    
+    def delete_confnig(self, target: StorageMode, yes: bool = False):
         path = self._local_dir if target == 'local' else self._global_dir
         if path.exists():
             if yes:
@@ -124,15 +129,15 @@ class Manager(PathFormatter):
             elif IOFormatter.yes_or_no(f'**Caution**: You are about to delete the entire configuration folder at [{path}].\n'
                                        'Are you sure you want to proceed?'):
                 shutil.rmtree(path)
-
+    
     def get_fetcher(self, mode: SnippetMode) -> SnippetsFetcherType:
-        """Returns the appropriate fetcher based on the mode.
+        """Returns the appropriate fetcher based on the specified mode.
 
         Args:
-            mode (Literal['plugin', 'preset', 'spec', 'recipe']): The mode determining which type of fetcher to return.
+            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
 
         Returns:
-            SnippetsFetcher: An instance of SnippetsFetcher configured for the specified mode.
+            SnippetsFetcher: An instance of SnippetsFetcher configured to operate in the specified mode.
         """
         return self._fetchers[mode]
 
@@ -140,26 +145,26 @@ class Manager(PathFormatter):
         """Retrieves a configured SnippetsFetcher for the specified mode to handle fetching of snippets.
 
         Args:
-            mode (Literal['plugin', 'preset', 'spec', 'recipe']): The specific category of snippets to fetch.
+            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
 
         Returns:
             SnippetsFetcher: A fetcher configured for fetching snippets of the specified type.
         """
-        return SnippetsFetcher(repos=self.config['snippets']['repo'],
+        return SnippetsFetcher(repos=self.config['plugin']['repo'],
                                mode=mode,
                                path=self._check_dir(mode))
     
-    def _check_dir(self, type_: SnippetMode) -> SnippetPath:
+    def _check_dir(self, mode: SnippetMode) -> SnippetPath:
         """Checks and prepares the directory for the specified snippet type, ensuring it exists.
 
         Args:
-            type_ (Literal['plugin', 'preset', 'spec', 'recipe']): The type of snippet for which the directory is checked.
+            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
 
         Returns:
             Tuple[Path, bool]: A tuple containing the path to the directory and a cache flag indicating
                                 if caching is necessary (True if so).
         """
-        path, cache = (self.config_dir / type_, False) if self.created else (None, True)
+        path, cache = (self.config_dir / mode, False) if self.config_created else (None, True)
         if path and not path.exists():
             path.mkdir()
         return path, cache
@@ -181,29 +186,19 @@ class Manager(PathFormatter):
                      snippet: SnippetType) -> bool:
         return any(s.name == snippet.name for s in self.installed(mode))
     
-    def download(self, 
-                 mode: SnippetMode, 
-                 snippet_name: str,
-                 snippet_version: str,
-                 destination: Optional[Union[Path, str]] = None):
-        """Download snippet by name from selected mode"""
-        if not destination and not self.config_dir.exists():
-            self._warnings_not_exists()
-            return None
+    # def download(self, 
+    #              mode: SnippetMode, 
+    #              snippet_name: str,
+    #              snippet_version: str,
+    #              destination: Optional[Union[Path, str]] = None):
+    #     """Download snippet by name from selected mode"""
+    #     if not destination and not self.config_dir.exists():
+    #         WarnRaiser(self.download).config_not_found()
+    #         return None
         
-        destination = self._resolve(destination) if destination else (self.config_dir / mode)
-        destination.mkdir(exist_ok=True)
-        # check local
-        fetcher: SnippetsFetcherType = self.get_fetcher[mode]
-        print(f"++ Fetching avail {mode} snippets from remote repository...")
-        avail = [s for s in fetcher.remote]
-        
-    @staticmethod
-    def _warnings_exists():
-        warnings.warn("Config folder already exists, please use 'force' option if you want overwrite.",
-                      UserWarning)
-    
-    @staticmethod
-    def _warnings_not_exists():
-        warnings.warn("Config folder does not exist, please use 'create' option if you want create.",
-                      UserWarning)
+    #     destination = self._resolve(destination) if destination else (self.config_dir / mode)
+    #     destination.mkdir(exist_ok=True)
+    #     # check local
+    #     fetcher: SnippetsFetcherType = self.get_fetcher[mode]
+    #     print(f"++ Fetching avail {mode} snippets from remote repository...")
+    #     avail = [s for s in fetcher.remote]
