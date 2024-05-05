@@ -164,5 +164,5 @@ cython_debug/
 
 # xnippy config dir
 .xnippy
-
 tests/*.ipynb
+.vscode
