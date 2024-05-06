@@ -14,15 +14,15 @@ This initiative stems from the need to evolve project features without the overh
 - **GitHub Integration**: `xnippy` leverages GitHub as a repository server, enabling real-time updates and collaboration without the need for repackaging and redistributing through channels like PyPi. This feature ensures that new functionalities are instantly available without the need for updating the main package.
 - **Simplicity**: Our plugin architecture avoids the complexities of `setup.py`, `setup.cfg`, or `pyproject.toml` files, focusing instead on straightforward GitHub-based sharing and version control.
 
-### **Presets**
+### **Presets** -- WIP
 - **Functionality**: Presets simplify configuring plugins with multiple input arguments, ensuring consistent setups and facilitating hyperparameter testing in machine learning projects.
 - **Documentation**: Detailed information is available in our [Preset Documentation](examples/docs/PRESET.md).
 
-### **Specifications (Specs)**
+### **Specifications (Specs)** -- WIP
 - **Purpose**: Tailored for data analysis projects, specifications help define and validate data types and structures, ensuring data integrity and facilitating detailed inspections and validations similar to systems like Pydantic.
 - **Documentation**: Explore our [Specification Documentation](examples/docs/SPEC.md) for more details.
 
-### **Recipes**
+### **Recipes**  -- WIP
 - **Utility**: Recipes allow for the automation of data preprocessing and metadata remapping, streamlining the integration and manipulation of datasets.
 - **Documentation**: Learn how to create and use recipes with our [Recipe Documentation](examples/docs/RECIPE.md).
 
@@ -31,11 +31,11 @@ To begin integrating `xnippy` into your project, refer to our comprehensive [Pro
 
 ## Documentation
 For detailed documentation on each component of the `xnippy` system, please visit the following links:
+- [Project Configuration](examples/docs/PROJECT_CONFIG.md)
 - [Plugins](examples/docs/PLUGIN.md)
   - [Presets](examples/docs/PRESET.md)
   - [Specifications for Dataset](examples/docs/SPEC.md)
   - [Recipes for Parsing and Remapping MetaData](examples/docs/RECIPE.md)
-- [Project Configuration](examples/docs/PROJECT_CONFIG.md)
 
 Explore these documents to fully understand how each module can be utilized and configured to enrich your project with our versatile plugin architecture.
 
