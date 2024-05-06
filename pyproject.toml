@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "xnippy"
+name = "xnippet"
 dynamic = ['version']
 description = "A Python module for dynamic integration and management of extensible code snippets."
 readme = "README.md"
@@ -30,7 +30,8 @@ requires-python = ">=3.7"
 dependencies = [
     "pyyaml>=6.0.1",
     "packaging>=23.0",
-    "tqdm>=4.66.1"
+    "tqdm>=4.66.1",
+    "requests>=2.31.0"
 ]
 urls = {Homepage = "https://xoani.github.io"}
 
@@ -44,5 +45,5 @@ dev = [
 
 # Additional configuration specific to hatch can go under 'tool.hatch.*'
 [tool.hatch.version]
-path = "xnippy/__init__.py"
+path = "xnippet/__init__.py"
 style = "pep440"

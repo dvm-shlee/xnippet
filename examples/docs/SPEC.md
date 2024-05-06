@@ -15,7 +15,7 @@ Each field in the dataset is described in detail, specifying the validation requ
 
 **Example Specification YAML Document:**
 ```yaml
-package: xnippy>=0.1.0
+package: xnippet>=0.1.0
 plugin: plugin_example
 spec:
   name: spec_snippet

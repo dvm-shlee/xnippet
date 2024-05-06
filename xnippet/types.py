@@ -18,7 +18,7 @@ class Resource:
 
 ResourceType = Type[Union[Resource, List[Resource]]]
 
-XnipyManagerType = Type[Manager]
+XnippetManagerType = Type[Manager]
 
 StorageMode = Literal['local', 'global']
 
@@ -46,7 +46,7 @@ SpecSnippetType = Type[SpecSnippet]
 
 __all__ = [
     'ResourceType', 'VersionType',
-    'XnipyManagerType', 'StorageMode',
+    'XnippetManagerType', 'StorageMode',
     'FetcherType', 'SnippetsFetcherType', 'PlugInFetcherType',
     'SnippetType', 'SnippetPath', 'SnippetMode',
     'PlugInSnippetType', 

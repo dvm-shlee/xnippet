@@ -3,7 +3,7 @@ import yaml
 import logging
 import shutil
 import pytest as pytest_
-import xnippy as xnippy_
+import xnippet as xnippet_
 from pathlib import Path
 
 
@@ -18,20 +18,20 @@ def pytest_configure(config):
 def presets(request):
     os.chdir('tests')
     def return_working_directory():
-        if os.path.exists('.xnippy'):
-            shutil.rmtree('.xnippy')
+        if os.path.exists('.xnippet'):
+            shutil.rmtree('.xnippet')
         os.chdir('..')
         
     request.addfinalizer(return_working_directory)
     
-    return {'empty': {"package_name": "xnippy", 
-                      "package_version": xnippy_.__version__,
+    return {'empty': {"package_name": "xnippet", 
+                      "package_version": xnippet_.__version__,
                       "package__file__": __file__,
                       "config_path": None,
                       "config_filename": 'config_for_test.yaml'},
-            'example': {"package_name": "xnippy-live", 
-                        "package_version": xnippy_.__version__,
-                        "package__file__": Path(xnippy_.__file__).parent,
+            'example': {"package_name": "xnippet-live", 
+                        "package_version": xnippet_.__version__,
+                        "package__file__": Path(xnippet_.__file__).parent,
                         "config_path": 'examples',
                         "config_filename": 'example_config.yaml'}}
     
@@ -39,7 +39,7 @@ def presets(request):
 
 @pytest_.fixture(scope="function")
 def default_config():
-    with open(Path.resolve(Path(__file__).parents[1] / 'xnippy/yaml/config.yaml'), 'r') as f:
+    with open(Path.resolve(Path(__file__).parents[1] / 'xnippet/yaml/config.yaml'), 'r') as f:
         default_config = yaml.safe_load(f)
     return default_config
 
@@ -48,5 +48,5 @@ def pytest():
     return pytest_
 
 @pytest_.fixture(scope='function')
-def xnippy():
-    return xnippy_
+def xnippet():
+    return xnippet_

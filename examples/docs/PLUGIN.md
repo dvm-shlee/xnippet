@@ -1,7 +1,7 @@
 ## **Plugin Configuration Guide: "plugin_example"**
 
 ### **Overview**
-This guide provides detailed instructions on configuring `plugin_example`, a specialized plugin designed for computational tasks within the `xnippy` software package. This document outlines essential information regarding dependencies, source files, and execution specifics necessary for proper integration and operation.
+This guide provides detailed instructions on configuring `plugin_example`, a specialized plugin designed for computational tasks within the `xnippet` software package. This document outlines essential information regarding dependencies, source files, and execution specifics necessary for proper integration and operation.
 
 ### **Plugin Structure**
 
@@ -21,7 +21,7 @@ plugin_root/
 
 **`manifest.yaml` Configuration:**
 ```yaml
-package: xnippy>=0.1.0
+package: xnippet>=0.1.0
 plugin:
   name: plugin_example
   version: 0.1.0
@@ -57,7 +57,7 @@ features:
 
 ### **Explanation of Configuration Elements**
 
-- **`package`**: Specifies `xnippy` as the required framework with a minimum version of 0.1.0 for compatibility.
+- **`package`**: Specifies `xnippet` as the required framework with a minimum version of 0.1.0 for compatibility.
 
 - **`plugin`**:
   - **`name`**: Identifier for the plugin, `plugin_example`.

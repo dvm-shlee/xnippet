@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
     from typing import Dict, List, Any
-    from xnippy.types import ResourceType
+    from xnippet.types import ResourceType
 
 class Resource:
     def to_dict(self):

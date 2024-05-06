@@ -29,7 +29,7 @@ This recipe is designed to extract and process diverse customer information, fro
 
 **YAML Recipe:**
 ```yaml
-package: xnippy>=0.1.0
+package: xnippet>=0.1.0
 plugin: plugin_example
 recipe:
   name: customer_info_aggregator

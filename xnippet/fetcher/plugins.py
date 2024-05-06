@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
     from typing import List
-    from xnippy.types import SnippetType, SnippetPath, StorageMode
+    from xnippet.types import SnippetType, SnippetPath, StorageMode
 
 class PlugIns(SnippetFetcher):
     """Manages the aggregation of PlugIn snippets."""

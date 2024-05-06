@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 import warnings
 import requests
-from xnippy.formatter import PathFormatter
+from xnippet.formatter import PathFormatter
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Union

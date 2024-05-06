@@ -15,13 +15,13 @@ import os
 import warnings
 from pathlib import Path
 from .base import Fetcher
-from xnippy.raiser import WarnRaiser
-from xnippy.snippet import PlugInSnippet, RecipeSnippet, SpecSnippet, PresetSnippet
+from xnippet.raiser import WarnRaiser
+from xnippet.snippet import PlugInSnippet, RecipeSnippet, SpecSnippet, PresetSnippet
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
     from typing import List
-    from xnippy.types import SnippetType, SnippetMode, SnippetPath, StorageMode, VersionType
+    from xnippet.types import SnippetType, SnippetMode, SnippetPath, StorageMode, VersionType
 
 
 class Snippets(Fetcher):
@@ -87,7 +87,7 @@ class Snippets(Fetcher):
         """Fetches snippets from local storage based on the current mode and path settings.
 
         Gathers contents from the specified directory and converts them into snippets. This operation
-        is skipped if caching mode is enabled. (This means the Xnippy initiated with dedicate space to download Sneppits.)
+        is skipped if caching mode is enabled. (This means the Xnippet initiated with dedicate space to download Sneppits.)
 
         Returns:
             Optional[list]: Returns None if caching is enabled, otherwise returns a list of fetched local contents.

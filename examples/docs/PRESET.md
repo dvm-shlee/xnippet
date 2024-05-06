@@ -14,7 +14,7 @@ This guide explains how to configure plugins using presets in a YAML configurati
 
 **YAML Configuration:**
 ```yaml
-package: xnippy>=0.1.0
+package: xnippet>=0.1.0
 plugin: plugin_example
 preset:
   name: valuepairs
@@ -53,7 +53,7 @@ def example_func(a, b):
 
 **Plugin Manifest:**
 ```yaml
-package: xnippy>=0.1.0
+package: xnippet>=0.1.0
 plugin:
   name: plugin_example
   version: 0.1.0

@@ -17,9 +17,9 @@ import inspect
 from pathlib import Path
 from tqdm import tqdm
 from .base import Snippet
-from xnippy.raiser import WarnRaiser
-from xnippy.module import ModuleLoader
-from xnippy.module import ModuleInstaller
+from xnippet.raiser import WarnRaiser
+from xnippet.module import ModuleLoader
+from xnippet.module import ModuleInstaller
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Tuple, Dict, Optional, Union
@@ -101,7 +101,7 @@ class PlugIn(Snippet):
         if any(k not in list(self._manifest.keys()) for k in self._required_key):
             comment = ["Please verify the manifest file's structure. Ensure it includes all required keys: ",
                        "'package', 'plugin', 'source', 'dependencies'. For more details, refer to the documentation: ",
-                       "https://github.com/xoani/xnippy/blob/master/examples/docs/PLUGIN.md"]
+                       "https://github.com/xoani/xnippet/blob/master/examples/docs/PLUGIN.md"]
             WarnRaiser('self._load_manifest').compliance_warning(comment=''.join(comment))
             self.is_valid = False
         else:
