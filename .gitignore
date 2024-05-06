@@ -162,7 +162,7 @@ cython_debug/
 # OSX cache
 .DS_Store
 
-# xnippy config dir
-.xnippy
+# xnippet config dir
+.xnippet
 tests/*.ipynb
 .vscode
