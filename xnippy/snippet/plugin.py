@@ -209,16 +209,16 @@ class PlugIn(Snippet):
             The imported method from the module.
         """
         # run include dependency
-        include = self._manifest['source']['include']
-        if isinstance(include, str):
-            include = [include]
-        for filename in include:
-            if filename.endswith('.py'):
-                mloc = self._data[filename] if self._remote else self._contents['files'][filename]
-                loader = ModuleLoader(mloc)
-                module_name = filename.replace(".py", "")
-                module = loader.get_module(module_name)
-                self._include[module_name] = module
+        if include := self._manifest['source']['include'] if 'include' in self._manifest['source'] else None:
+            if isinstance(include, str):
+                include = [include]
+            for filename in include:
+                if filename.endswith('.py'):
+                    mloc = self._data[filename] if self._remote else self._contents['files'][filename]
+                    loader = ModuleLoader(mloc)
+                    module_name = filename.replace(".py", "")
+                    module = loader.get_module(module_name)
+                    self._include[module_name] = module
         
         # load entry point
         source = self._manifest['source']['entry_point']
