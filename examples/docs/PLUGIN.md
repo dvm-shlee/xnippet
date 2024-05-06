@@ -41,10 +41,7 @@ source:
   entry_point: plugin_example.py:example_func
 
 dependencies:
-  module:
-    - numpy
-  plugin:
-    - plugin_template==0.1.0
+  - numpy
 
 features:
   preset:
@@ -74,9 +71,7 @@ features:
   - **`include`**: Names auxiliary files required for the plugin's functionality.
   - **`entry_point`**: Designates `plugin_example.py:example_func` as the primary function or class for execution, ensuring it is loaded last for proper initialization.
 
-- **`dependencies`**:
-  - **`module`**: External Python modules that the plugin depends on, such as `numpy`.
-  - **`plugin`**: Other plugins that must be installed and version-matched for this plugin’s operation.
+- **`dependencies`**: External Python modules that the plugin depends on, such as `numpy`.
 
 ### **Usage Guidelines**
 
