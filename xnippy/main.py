@@ -94,7 +94,7 @@ class Manager(PathFormatter):
         Returns:
             SnippetsFetcher: A fetcher configured for fetching snippets of the specified type.
         """
-        self._fetcher = PlugInFetcher(repos=self.config['plugin']['repo'],
+        self._fetcher = PlugInFetcher(repos=self.config['xnippy']['repo'],
                                       package_name=self._package_name,
                                       package_version=self._package_version,
                                       path=self._check_dir())

@@ -1,5 +1,5 @@
 # default configuration for brkraw
-plugin:
+xnippy:
   repo:
   - name: xnippy
     url: https://github.com/xoani/xnippy.git

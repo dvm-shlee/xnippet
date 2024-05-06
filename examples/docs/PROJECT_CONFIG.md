@@ -23,7 +23,7 @@ project_root/
 Below is an essential configuration snippet for `config.yaml`, which sets up the plugin system with `xnippy`. It specifies the repositories, paths, and templates needed for plugins, presets, specs, and recipes.
 
 ```yaml
-plugin:
+xnippy:
   repo:
     - name: xnippy
       url: https://github.com/xoani/xnippy.git
@@ -35,7 +35,7 @@ plugin:
 
 ### Configuration Breakdown:
 
-- **`plugin`**: Defines the overall container for plugin settings.
+- **`xnippy`**: Defines the overall container for xnippy settings.
   - **`repo`**:
     - **`name`**: Identifier for the repository, `xnippy`.
     - **`url`**: URL where the plugin repository is hosted.
