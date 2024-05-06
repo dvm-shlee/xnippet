@@ -48,8 +48,9 @@ classifier:
       key: details.preferred_contact
       where: email  # Assumes functionality to prioritize 'email' over other contacts
     reward_points:
+      setup-script: "ratio = 10"
       loyalty_points: profile.loyalty_points
-      script: "loyalty_points / 10"  # Converts loyalty points into reward points
+      script: "loyalty_points / ratio"  # Converts loyalty points into reward points
 ```
 
 ### **Parsed Output**
