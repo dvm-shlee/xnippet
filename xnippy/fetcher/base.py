@@ -43,7 +43,9 @@ class Fetcher(PathFormatter):
             bool: True if the connection is successful, False otherwise.
         """
         try:
-            Fetcher._fetch_from_url("https://api.github.com")
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                Fetcher._fetch_from_url("https://api.github.com") # this will get status code 403
         except (requests.ConnectTimeout, requests.ConnectionError, requests.RequestException):
             return False
         return True
@@ -145,7 +147,7 @@ class Fetcher(PathFormatter):
             repo = matched['repo']
             if matched['path']:
                 path_ = matched['path']
-            path = '/'.join([path_, path]) if path_ else path
+                path = '/'.join([path_, path]) if path_ else path
             url = f"https://api.github.com/repos/{owner}/{repo}/contents"
             return f"{url}/{path}" if path else url
     
@@ -164,7 +166,11 @@ class Fetcher(PathFormatter):
         if response.status_code == 200:
             return response
         else:
-            warnings.warn(f"Failed to retrieve contents: {response.status_code}", UserWarning)
+            warnings.warn(f"Failed to retrieve contents: {response.status_code}.", UserWarning)
+            if response.status_code == 403:
+                warnings.warn(f"It potentially due to incorect repo address or exceed limit of request."
+                              " Try use API token for giigle", UserWarning)
+            
             return None
 
     @staticmethod
@@ -188,34 +194,3 @@ class Fetcher(PathFormatter):
         except requests.RequestException as e:
             warnings.warn(f'Error downloading the file: {e}')
             return False
-
-
-# import requests
-
-# # Your personal access token
-# token = 'your_github_token_here'
-
-# # API URL for creating a file in a repository
-# url = "https://api.github.com/repos/username/repository/contents/path/to/file"
-
-# # The content of the file you want to push
-# content = {
-#     "message": "Commit message",
-#     "committer": {
-#         "name": "Your Name",
-#         "email": "your_email@example.com"
-#     },
-#     "content": "bXkgbmV3IGZpbGUgY29udGVudHM=",  # This is base64 encoded content
-#     "branch": "main"  # Or any other branch
-# }
-
-# # Make the HTTP request
-# headers = {'Authorization': f'token {token}'}
-# response = requests.put(url, json=content, headers=headers)
-
-# # Check the response
-# if response.status_code == 201:
-#     print("Successfully created the file.")
-# else:
-#     print("Failed to create the file.")
-#     print("Response:", response.content)

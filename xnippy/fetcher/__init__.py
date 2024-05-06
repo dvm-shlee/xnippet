@@ -9,6 +9,7 @@ Exposes:
                      designated sources.
 """
 
-from .snippets import Snippets as SnippetsFetcher
+from .snippets import Snippets as SnippetFetcher
+from .plugins import PlugIns as PlugInFetcher
 
-__all__ = ['SnippetsFetcher']
+__all__ = ['SnippetFetcher', 'PlugInFetcher']

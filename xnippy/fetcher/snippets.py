@@ -13,15 +13,15 @@ Classes:
 from __future__ import annotations
 import os
 import warnings
-from xnippy.raiser import WarnRaiser
 from pathlib import Path
 from .base import Fetcher
+from xnippy.raiser import WarnRaiser
 from xnippy.snippet import PlugInSnippet, RecipeSnippet, SpecSnippet, PresetSnippet
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
     from typing import List
-    from xnippy.types import SnippetType, SnippetMode, SnippetPath, StorageMode
+    from xnippy.types import SnippetType, SnippetMode, SnippetPath, StorageMode, VersionType
 
 
 class Snippets(Fetcher):
@@ -32,15 +32,17 @@ class Snippets(Fetcher):
     """
     path: Optional[Path]
     mode: SnippetMode
+    package_name: str
+    package_version: VersionType
     is_cache: bool
     _fetched: bool = False
-    _template: List[SnippetType] = []
     _remote_snippets: List[SnippetType] = []
     _local_snippets: List[SnippetType] = []
-    _template_snippets: List[SnippetType] = []
     
     def __init__(self, 
                  repos: dict,
+                 package_name: str,
+                 package_version: VersionType,
                  mode: SnippetMode,
                  path: SnippetPath = (None, False)
                  ) -> None:
@@ -52,17 +54,13 @@ class Snippets(Fetcher):
             path (Tuple[Optional[Path], bool], optional): A tuple containing the path to local storage and a boolean indicating cache usage.
         """
         self._repos = self._inspect_repos(repos)
+        self.package_name = package_name
+        self.package_version = package_version
         self.mode = mode
         self.path = self._resolve(path[0]) if path[0] else path[0]
         self.is_cache = path[1]
         self._set_auth()
         self._fetch_local_contents()
-        # self._parse_templates()
-        # self._template = [c[mode]['template'] for c in repos if 'template' in c[mode]]
-        
-    def _parse_template(self):
-        
-        pass
         
     def _inspect_repos(self, repos):
         inspected = {}
@@ -89,7 +87,7 @@ class Snippets(Fetcher):
         """Fetches snippets from local storage based on the current mode and path settings.
 
         Gathers contents from the specified directory and converts them into snippets. This operation
-        is skipped if caching is enabled.
+        is skipped if caching mode is enabled. (This means the Xnippy initiated with dedicate space to download Sneppits.)
 
         Returns:
             Optional[list]: Returns None if caching is enabled, otherwise returns a list of fetched local contents.
@@ -121,44 +119,25 @@ class Snippets(Fetcher):
         """Converts fetched contents from either local or remote sources into snippet objects.
 
         Iterates over fetched contents, creating snippet objects which are then stored appropriately
-        based on their validation status and whether they match predefined templates.
+        based on their validation status.
 
         Args:
             contents (list): List of contents fetched from either local or remote sources.
             remote (bool, optional): Flag indicating whether the contents are from remote sources.
         """
-        for repo_id, contents in enumerate(contents):
-            for c in contents:
+        snippets = []
+        for repo_id, content in enumerate(contents):
+            for c in content:
                 if remote:
-                    snippet = self._snippet(contents=c, auth=self._auth[repo_id], remote=remote)
-                    self._store_remote_snippet(repo_id=repo_id, snippet=snippet)
+                    snippets.append(self._snippet(contents=c, auth=self._auth[repo_id], remote=remote))
+                    storage = self._remote_snippets
                 else:
-                    snippet = self._snippet(contents=c, remote=remote)
-                    if snippet.is_valid and \
-                        snippet.name not in [s.name for s in self._local_snippets]:
-                        self._local_snippets.append(snippet)
+                    snippets.append(self._snippet(contents=c, remote=remote))
+                    storage = self._local_snippets
+        for s in snippets:            
+            if s.is_valid and s.name not in [s_.name for s_ in storage]:
+                storage.append(s)
                         
-    def _store_remote_snippet(self, repo_id: int, snippet: SnippetType):
-        """Stores validated remote snippets into the appropriate lists based on template matching.
-
-        Checks if the snippet is valid and if it matches a template or not. Based on this,
-        the snippet is added to the respective list (template snippets or general remote snippets).
-
-        Args:
-            repo_id (int): The repository ID corresponding to the snippet source.
-            snippet (Snippet): The snippet object to be stored.
-        """
-        if not snippet.is_valid:
-            return None
-        # if self._is_template(repo_id, snippet) and \
-        #     snippet.name not in [s.name for s in self._template_snippets]:
-        #     self._template_snippets.append(snippet)
-        # elif not self._is_template(repo_id, snippet) and \
-        #     snippet.name not in [s.name for s in self._remote_snippets]:
-        #     self._remote_snippets.append(snippet)
-        elif snippet.name not in [s.name for s in self._remote_snippets]:
-            self._remote_snippets.append(snippet)
-        
     @property
     def _snippet(self):
         """Determines the snippet class based on the operational mode.
@@ -196,24 +175,11 @@ class Snippets(Fetcher):
                 warnings.warn("Connection failed. Please check your network settings.")
                 return None
     
-    def _is_template(self, repo_id: int, snippet: SnippetType) -> bool:
-        """Test given snippet is template. This internal method used to exclude template snippets from avail."""
-        return any(snippet.name == t for t in self._template[repo_id])
-    
     @property
     def local(self):
+        self._fetch_local_contents()
         return self._local_snippets
 
     @property
     def is_up_to_date(self):
         return self._fetched
-    
-    def get(self, 
-            name: str, 
-            version: Optional[str], 
-            storage_mode: Optional[StorageMode]):
-        if storage_mode:
-            storage = [self.local if storage_mode == 'local' else self.remote]
-        else:
-            storage = [self.local, self.remote]
-        
