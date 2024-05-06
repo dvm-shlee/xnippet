@@ -13,7 +13,6 @@ Author: Sung-Ho Lee (shlee@unc.edu)
 from __future__ import annotations
 import re
 import yaml
-import warnings
 import inspect
 from pathlib import Path
 from tqdm import tqdm
@@ -37,17 +36,21 @@ class PlugIn(Snippet):
                            "files": list of paths or download urls of file contents,
                            "dirs": list of paths or access urls of diretory contents}
     """
+    _required_key: list = ['plugin', 'source', 'dependencies'] #, 'package']
     _remote: bool
     _activated: bool
     _dependencies_tested: bool = False 
     _auth: Tuple[str, str]
     _data: Dict = {}
     _contents: Dict
+    _repository: Optional[str]
+    _include: Dict = {}
     
     def __init__(self, 
                  contents: dict, 
                  auth: Optional[Tuple[str, str]] = None, 
-                 remote: bool = False):
+                 remote: bool = False,
+                 repository: Optional[str] = None):
         """Initializes the plugin with specified contents, authentication for remote access, and remote status.
 
         Args:
@@ -59,6 +62,7 @@ class PlugIn(Snippet):
         self._auth = auth
         self._contents = contents
         self._remote = remote
+        self._repository = repository if remote else None
         self._content_parser()
 
     ## Preparation step: starts
@@ -94,16 +98,21 @@ class PlugIn(Snippet):
         else:
             with open(file_loc, 'r') as f:
                 self._manifest = yaml.safe_load(f)
-        if self._manifest['type'] != 'plugin':
-            warnings.warn(f"The type annotation for the '{self._manifest['name']}' plugin manifest is not set as 'plugin.' \
-                    This may cause the plugin to function incorrectly.")
+        if any(k not in list(self._manifest.keys()) for k in self._required_key):
+            comment = ["Please verify the manifest file's structure. Ensure it includes all required keys: ",
+                       "'package', 'plugin', 'source', 'dependencies'. For more details, refer to the documentation: ",
+                       "https://github.com/xoani/xnippy/blob/master/examples/docs/PLUGIN.md"]
+            WarnRaiser('self._load_manifest').compliance_warning(comment=''.join(comment))
             self.is_valid = False
+        else:
+            self.is_valid = True
             
     def _set_params(self):
         try:
-            self.parse_version(self._manifest['version'])
-            self.name = self._manifest['name']
-            self.type = self._manifest['subtype']
+            info = self._manifest['plugin']
+            self.parse_version(info['version'])
+            self.name = info['name']
+            self.package = info['package'] if 'package' in info.keys() else None
             self.is_valid = True
         except (KeyError, AttributeError):
             self.is_valid = False
@@ -111,7 +120,7 @@ class PlugIn(Snippet):
     ## Preperation step: ends
 
     ## Execution step: starts
-    def set(self, skip_dependency_check: bool = False, *args, **kwargs):
+    def run(self, skip_dependency_check: bool = False, *args, **kwargs):
         """Sets the plugin's parameters and ensures dependencies are resolved and the module is loaded.
 
         This method acts as a setup routine by testing dependencies, downloading necessary files,
@@ -129,7 +138,7 @@ class PlugIn(Snippet):
             ValueError: If the provided arguments do not match the required function signature.
         """
         if not self._activated:
-            self.activate()
+            self.download()
         sig = inspect.signature(self._imported_object)
         try:
             # This will raise a TypeError if the arguments do not match the function signature
@@ -141,7 +150,7 @@ class PlugIn(Snippet):
         return self._imported_object(*args, **kwargs)
     
     ## execution start
-    def activate(self, dest: Optional[Path] = None, force: bool = False):
+    def download(self, dest: Optional[Path] = None, force: bool = False):
         """Downloads the plugin to a specified destination or loads it directly into memory if no destination is provided.
         This method also checks if the file already exists at the destination and optionally overwrites it based on the 'force' parameter.
 
@@ -152,17 +161,18 @@ class PlugIn(Snippet):
                                     Defaults to False.
         """
         if not self._remote:
-            WarnRaiser(self.activate).download_failed(comment="The plugin is already available locally and cannot be downloaded again.")
+            WarnRaiser(self._activated).download_failed(comment="The plugin is already available locally and cannot be downloaded again.")
             return False
         print(f"\n++ Downloading remote module to '{dest or 'memory'}'.")
         files = self._contents['files'] if dest else self._get_module_files()
         for filename, download_url in tqdm(files.items(), desc=' -Files', ncols=80):
             if dest:
-                plugin_path: Path = (Path(dest).resolve() / self.name)
+                # The plugin will be downloaded on the folder with the name
+                plugin_path: Path = (Path(dest).resolve() / f'{self.name}_{str(self.version)}')
                 plugin_path.mkdir(exist_ok=True)
                 plugin_file: Path = plugin_path / filename
                 if plugin_file.exists() and not force:
-                    WarnRaiser(self.activate).file_exist(filename, comment="Skipping download. Use 'force=True' to overwrite.")
+                    WarnRaiser(self.download).file_exist(filename, comment="Skipping download. Use 'force=True' to overwrite.")
                     continue
                 with open(plugin_file, 'wb') as f:
                     for chunk in self._download_buffer(download_url, auth=self._auth):
@@ -171,38 +181,6 @@ class PlugIn(Snippet):
                 # When downloading to memory
                 self._data[filename] = b''.join(self._download_buffer(download_url, auth=self._auth))
                 self._activated = True  # Mark the module as loaded
-    
-    def _import_module(self):
-        """Dynamically imports the module from loaded data.
-
-        This method uses the information from the manifest to import the specified module and method dynamically.
-
-        Returns:
-            The imported method from the module.
-        """
-        source = self._manifest['source']
-        if isinstance(source, str):
-            source = [source]
-        ptrn_object_target = r'(?P<filename>[a-zA-Z0-9_-]+.py)(:?\:(?P<target>^[a-zA-Z]{1}[a-zA-Z0-9]+))?'
-        
-        # inspect how many source contains target
-        inspected = {i:(re.match(ptrn_object_target, s), s) for i, s in enumerate(source)}
-        # if sources contains multiple tarket, warn it the target only one availalbe, and recommand it to be last item of source
-        items_have_object_targets = [item for _, item in inspected.items() if item[0] is not None]
-        num_object_targets = len(items_have_object_targets)
-        if num_object_targets > 1:
-            WarnRaiser(self._import_module).invalid_approach(f"The object target expected to be only 1 but {num_object_targets} found:"
-                                                             f"->{items_have_object_targets} Assigning last target to '_object_target' attribute.")
-        
-        # we probably need to set this on initiation, during module loaded... and map property only loaded one.
-        # for s in source:
-            
-        #     if matched := re.match(ptrn, s):
-        #         filename, target = matched.groups()
-        #         mloc = self._data[filename] if self._remote else self._contents['files'][filename]
-        #         loader = ModuleLoader(mloc)
-        #         module = loader.get_module(self.name)
-        #         return getattr(module, target)
     
     def resolve_dependencies(self):
         """Checks and installs any missing dependencies specified in the plugin's manifest file."""
@@ -230,41 +208,34 @@ class PlugIn(Snippet):
         Returns:
             The imported method from the module.
         """
-        source = self._manifest['source']
-        if isinstance(source, str):
-            source = [source]
-        
-        for s in source:
-            ptrn = r'(?P<filename>[a-zA-Z0-9_-]+.py)(:?\:(?P<target>^[a-zA-Z]{1}[a-zA-Z0-9]+))?'
-            if matched := re.match(ptrn, s):
-                filename, target = matched.groups()
+        # run include dependency
+        include = self._manifest['source']['include']
+        if isinstance(include, str):
+            include = [include]
+        for filename in include:
+            if filename.endswith('.py'):
                 mloc = self._data[filename] if self._remote else self._contents['files'][filename]
                 loader = ModuleLoader(mloc)
-                module = loader.get_module(self.name)
-                return getattr(module, target)
+                module_name = filename.replace(".py", "")
+                module = loader.get_module(module_name)
+                self._include[module_name] = module
         
-    @property  
-    def _imported_module_to_memory(self):
-        source = self._manifest['source']
-        if isinstance(source, str):
-            source = [source]
-        for s in source:
-            ptrn = r'(?P<filename>[a-zA-Z0-9_-]+.py)(:?\:(?P<target>^[a-zA-Z]{1}[a-zA-Z0-9]+))?'
-            if matched := re.match(ptrn, s):
-                filename, target = matched.groups()
-                mloc = self._data[filename] if self._remote else self._contents['files'][filename]
-                loader = ModuleLoader(mloc)
-                module = loader.get_module(self.name)
-                return getattr(module, target)
+        # load entry point
+        source = self._manifest['source']['entry_point']
+        ptrn = r'(?P<filename>[a-zA-Z0-9_-]+\.py)(?::(?P<target>[a-zA-Z][a-zA-Z0-9\_\-]*))?'
+        if matched := re.match(ptrn, source):
+            filename, target = matched.groups()
+            mloc = self._data[filename] if self._remote else self._contents['files'][filename]
+            loader = ModuleLoader(mloc)
+            module = loader.get_module(self.name)
+            self._include[self.name] = module
+            return getattr(module, target)
         
-        return # list of mapped imported module in dictionary. the module itself, might accessible from memory directly, 
-               # but these are key to map that module for accessibility
-
     def __repr__(self):
         if self.is_valid:
-            repr = f"PlugInSnippet<{self.type}>::{self.name}=={self.version}"
+            repr = f"PlugInSnippet<{self.package}>::{self.name}=={self.version}"
             if self._remote:
-                repr += '+InMemory' if self._activated else '+Remote'
+                repr += '+InMemory' if self._activated else f'+Remote[{self._repository}]'
             return repr
         else:
             return "PlugInSnippet<?>::InValidPlugin"

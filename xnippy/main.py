@@ -8,20 +8,19 @@ requested by the user through CLI to create them in the home folder.
 from __future__ import annotations
 import yaml
 import shutil
-import warnings
 from packaging import version
 from pathlib import Path
-from .fetcher import SnippetsFetcher
+from .fetcher import PlugInFetcher
 from typing import TYPE_CHECKING
 from .formatter import PathFormatter
 from .formatter import IOFormatter
 from .raiser import WarnRaiser
 if TYPE_CHECKING:
-    from .types import SnippetMode, StorageMode, SnippetPath, SnippetType
-    from .types import SnippetsFetcherType, VersionType
-    from typing import List, Dict, Union, Optional
+    from .types import SnippetMode, StorageMode, SnippetPath, PlugInSnippetType
+    from .types import PlugInFetcherType, VersionType
+    from typing import List, Union, Optional
 
-class Xnippy(PathFormatter):
+class Manager(PathFormatter):
     """Manages the configuration settings for the application.
 
     This class ensures the existence of the configuration directory, loads or creates the configuration file,
@@ -33,10 +32,11 @@ class Xnippy(PathFormatter):
     _default_dir: 'Path'
     _local_dir: 'Path'
     _global_dir: 'Path'
+    _config_dir: 'Path'
     _fname: str
     _package_name: str
     _package_version: VersionType
-    _fetchers: Dict[SnippetsFetcherType] = {}
+    _fetcher: PlugInFetcherType
     _compatible_snippets: List[SnippetMode] = ['plugin']
     
     def __init__(self, 
@@ -56,24 +56,49 @@ class Xnippy(PathFormatter):
         """
         self._package_name = package_name
         self._home_dir = self._resolve('~')
-        self._default_dir = self._resolve(config_path) if config_path else self._resolve(package__file__).parent
+        self._default_dir = self._resolve(package__file__).parent / config_path if config_path else self._resolve(package__file__).parent
         self._local_dir = self._resolve(Path.cwd() / f'.{self._package_name}')
         self._global_dir = self._resolve(self._home_dir / f'.{self._package_name}')
         self._fname = config_filename
         self._package_version = version.parse(package_version)
-        self.reload_config()
+        self.reload()
 
-    def reload_config(self) -> None:
+    ## Initiation step
+    def reload(self) -> None:
         """Loads an existing configuration file or creates a new one if it does not exist, filling the 'config' dictionary with settings."""
+        self._set_config_dir()
         config_file = self.config_dir / self._fname
         if not config_file.exists() and self.config_dir == self._default_dir:
-            warnings.warn(f"Config file is not exists in '{self.config_dir}', preparing Xnippy's default configuration.", 
-                          UserWarning)
+            
+            comment = "Preparing default configuration. Use 'create_config' method to initialize."
+            WarnRaiser(self.reload).config_not_found(self.config_dir, comment=comment)
             config_file = self._resolve(__file__).parent / 'yaml/config.yaml'
         with open(config_file, 'r') as f:
             self.config = yaml.safe_load(f)
-        self._reload_fetchers()
+        self._reload_plugin_fetcher()
+        
+    def _set_config_dir(self):
+        if isinstance(self.config_created, list):
+            self._config_dir = self._local_dir
+        elif isinstance(self.config_created, str):
+            self._config_dir = self._local_dir if self.config_created == 'local' else self._global_dir
+        else:
+            self._config_dir = self._default_dir
 
+    def _reload_plugin_fetcher(self) -> None:
+        """Retrieves a configured SnippetsFetcher for the specified mode to handle fetching of snippets.
+
+        Args:
+            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
+
+        Returns:
+            SnippetsFetcher: A fetcher configured for fetching snippets of the specified type.
+        """
+        self._fetcher = PlugInFetcher(repos=self.config['plugin']['repo'],
+                                      package_name=self._package_name,
+                                      package_version=self._package_version,
+                                      path=self._check_dir())
+    
     @property
     def config_created(self) -> Union[StorageMode, list[str], bool]:
         """"Checks and returns the location where the configuration folder was created.
@@ -94,13 +119,9 @@ class Xnippy(PathFormatter):
         Returns:
             Path: Path to the configuration directory based on its existence and scope (global or local).
         """
-        if isinstance(self.config_created, list):
-            return self._local_dir
-        elif isinstance(self.config_created, str):
-            return self._local_dir if self.config_created == 'local' else self._global_dir
-        return self._default_dir
-    
-    def create_confnig(self, target: StorageMode = 'local', 
+        return self._config_dir
+        
+    def create_config(self, target: StorageMode = 'local', 
                        force: bool = False) -> bool:
         """Creates a configuration file at the specified target location.
 
@@ -116,89 +137,84 @@ class Xnippy(PathFormatter):
         config_file = config_dir / self._fname
         if config_file.exists():
             if not force:
-                WarnRaiser(self.create_confnig).config_exist_when_create()
+                WarnRaiser(self.create_config).config_exist_when_create()
                 return False
-        with open(config_dir / self._fname, 'w') as f:
+        with open(config_file, 'w') as f:
             yaml.safe_dump(self.config, f, sort_keys=False)
+        self.reload()
     
-    def delete_confnig(self, target: StorageMode, yes: bool = False):
+    def delete_config(self, target: StorageMode, yes: bool = False):
         path = self._local_dir if target == 'local' else self._global_dir
+        removed = False
         if path.exists():
             if yes:
                 shutil.rmtree(path)
+                removed = True
             elif IOFormatter.yes_or_no(f'**Caution**: You are about to delete the entire configuration folder at [{path}].\n'
                                        'Are you sure you want to proceed?'):
                 shutil.rmtree(path)
+                removed = True
+        if removed:
+            self.reload()
     
-    def get_fetcher(self, mode: SnippetMode) -> SnippetsFetcherType:
-        """Returns the appropriate fetcher based on the specified mode.
-
-        Args:
-            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
-
-        Returns:
-            SnippetsFetcher: An instance of SnippetsFetcher configured to operate in the specified mode.
-        """
-        return self._fetchers[mode]
-
-    def _get_snippet_fetcher(self, mode: SnippetMode) -> SnippetsFetcherType:
-        """Retrieves a configured SnippetsFetcher for the specified mode to handle fetching of snippets.
-
-        Args:
-            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
-
-        Returns:
-            SnippetsFetcher: A fetcher configured for fetching snippets of the specified type.
-        """
-        return SnippetsFetcher(repos=self.config['plugin']['repo'],
-                               mode=mode,
-                               path=self._check_dir(mode))
-    
-    def _check_dir(self, mode: SnippetMode) -> SnippetPath:
+    def _check_dir(self) -> SnippetPath:
         """Checks and prepares the directory for the specified snippet type, ensuring it exists.
-
-        Args:
-            mode (str): The mode that determines which type of fetcher to return. Valid modes are 'plugin', 'preset', 'spec', and 'recipe'.
 
         Returns:
             Tuple[Path, bool]: A tuple containing the path to the directory and a cache flag indicating
                                 if caching is necessary (True if so).
         """
-        path, cache = (self.config_dir / mode, False) if self.config_created else (None, True)
+        path, cache = (self.config_dir / 'plugin', False) if self.config_created else (None, True)
         if path and not path.exists():
             path.mkdir()
         return path, cache
-    
-    def _reload_fetchers(self):
-        for mode in self._compatible_snippets:
-            self._fetchers[mode] = self._get_snippet_fetcher(mode)
         
-    def avail(self, mode: SnippetMode) -> SnippetsFetcherType:
-        fetcher = self.get_fetcher(mode)
-        return {'remote': fetcher.remote,
-                'local': fetcher.local}
+    @property
+    def avail(self) -> List[PlugInSnippetType]:
+        """Check list of plugins not installed but available in remote repository"""
+        installed = [f'{p.name}=={str(p.version)}' for p in self.installed]
+        return [p for p in self._fetcher.remote if f'{p.name}=={str(p.version)}' not in installed]
     
-    def installed(self, mode: SnippetMode) -> SnippetsFetcherType:
-        return self.get_fetcher(mode).local
+    @property
+    def installed(self) -> List[PlugInSnippetType]:
+        """Check list of installed plugins."""
+        return self._fetcher.local
     
-    def is_installed(self, 
-                     mode: SnippetMode, 
-                     snippet: SnippetType) -> bool:
-        return any(s.name == snippet.name for s in self.installed(mode))
+    def get(self, plugin_name: str, 
+            plugin_version: Optional[str] = None, 
+            remote: bool = False) -> Union[PlugInSnippetType, List[PlugInSnippetType], None]:
+        """Return PlugInSnippet object."""
+        if plugin_version:
+            keyword = f'{plugin_name}=={plugin_version}'
+            if remote:
+                get_from = {f'{s.name}=={str(s.version)}':s for s in self.avail}
+            else:
+                get_from = {f'{s.name}=={str(s.version)}':s for s in self.installed}
+            if keyword in get_from.keys():
+                return get_from[keyword]
+            return None
+        keyword = plugin_name
+        return [s for s in self.installed if keyword == s.name]
     
-    # def download(self, 
-    #              mode: SnippetMode, 
-    #              snippet_name: str,
-    #              snippet_version: str,
-    #              destination: Optional[Union[Path, str]] = None):
-    #     """Download snippet by name from selected mode"""
-    #     if not destination and not self.config_dir.exists():
-    #         WarnRaiser(self.download).config_not_found()
-    #         return None
+    def is_installed(self, plugin_name: str, version: Optional[str] = None):
+        return True if self.get(plugin_name, version) else False
+    
+    def install(self, plugin_name: str, 
+                plugin_version: Optional[str] = None, 
+                yes: bool = False, target: StorageMode = 'local'):
+        if not self.config_created:
+            WarnRaiser(self.install).config_not_found(self.config_dir)
+            if yes or IOFormatter.yes_or_no(f"Do you want to proceed creating '{target}' configuration?"):
+                self.create_config(target=target)
         
-    #     destination = self._resolve(destination) if destination else (self.config_dir / mode)
-    #     destination.mkdir(exist_ok=True)
-    #     # check local
-    #     fetcher: SnippetsFetcherType = self.get_fetcher[mode]
-    #     print(f"++ Fetching avail {mode} snippets from remote repository...")
-    #     avail = [s for s in fetcher.remote]
+        plugin = self.get(plugin_name=plugin_name, plugin_version=plugin_version, remote=True)
+        plugin_dir, _ = self._check_dir()
+        plugin_name = f'{plugin_name}_{plugin_version}' if plugin_name else plugin_name
+        if (plugin_dir / plugin_name).exists():
+            WarnRaiser(self.install).file_exist()
+            if yes or IOFormatter.yes_or_no(f"Do you want to overwrite plugin '{target}' configuration?"):
+                plugin.download(dest=plugin_dir, force=yes)
+                return True
+            return False
+        plugin.download(dest=plugin_dir)
+        self.reload()

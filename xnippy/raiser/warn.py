@@ -31,8 +31,7 @@ class Warn:
         Raises:
             ConfigNotFound: Warns that the configuration file was not found and defaults are being used.
         """
-        message = f"Configuration file not found in '{config_dir}'. " \
-                  "Preparing Xnippy's default configuration. Use 'create_config' method to initialize."
+        message = f"Configuration file not found in '{config_dir}'."
         return self._warn(message=self._wrap_message(message, comment), category=ConfigNotFound)
     
     def config_exist_when_create(self, comment: Optional[str] = None):
@@ -43,14 +42,26 @@ class Warn:
         message = f"File '{filename}' already exists."
         return self._warn(message=self._wrap_message(message, comment), category=FileExistsWarning)
 
+    def connection_failed(self, comment: Optional[str] = None):
+        message = "Connection failed."
+        return self._warn(message=self._wrap_message(message, comment), category=ConnectionFailedWarning)
+
     def download_failed(self, comment: Optional[str] = None):
         message = "Download failed."
-        return self._warn(message=self._wrap_message(message, comment), cateroty=DownloadFailedWarning)
+        return self._warn(message=self._wrap_message(message, comment), category=DownloadFailedWarning)
     
     def invalid_approach(self, comment: Optional[str] = None):
         message = "Invalid approach."
-        return self._warn(message=self._wrap_message(message, comment), cateroty=DownloadFailedWarning)
+        return self._warn(message=self._wrap_message(message, comment), category=InvalidApproachWarning)
     
-        
-        
+    def compliance_warning(self, comment: Optional[str] = None):
+        """Issues a compliance warning with an optional custom comment.
+
+        Args:
+            comment (Optional[str]): Additional details about the compliance issue, default is None.
+        """
+        # Default message for compliance issues
+        message = "The manifest does not comply with the required standards."
+        return self._warn(message=self._wrap_message(message, comment), category=ComplianceWarning)
+
 

@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
 
 class Snippet(Fetcher):
+    package_name: str
+    package_version: str
     name: str
     version: VersionType
     type: str

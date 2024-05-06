@@ -1,8 +1,9 @@
 from typing import Type, Optional, Union
 from typing import Literal, Tuple, List
 from pathlib import Path
-from .main import Xnippy
-from .fetcher import SnippetsFetcher
+from .main import Manager
+from .fetcher import SnippetFetcher
+from .fetcher import PlugInFetcher
 from .fetcher.base import Fetcher
 from .snippet.base import Snippet
 from .snippet import PlugInSnippet
@@ -17,13 +18,15 @@ class Resource:
 
 ResourceType = Type[Union[Resource, List[Resource]]]
 
-XnippyType = Type[Xnippy]
+XnipyManagerType = Type[Manager]
 
 StorageMode = Literal['local', 'global']
 
 FetcherType = Type[Fetcher]
 
-SnippetsFetcherType = Type[SnippetsFetcher]
+SnippetsFetcherType = Type[SnippetFetcher]
+
+PlugInFetcherType = Type[PlugInFetcher]
 
 SnippetType = Type[Snippet]
 
@@ -43,8 +46,8 @@ SpecSnippetType = Type[SpecSnippet]
 
 __all__ = [
     'ResourceType', 'VersionType',
-    'XnippyType', 'StorageMode',
-    'FetcherType', 'SnippetsFetcherType',
+    'XnipyManagerType', 'StorageMode',
+    'FetcherType', 'SnippetsFetcherType', 'PlugInFetcherType',
     'SnippetType', 'SnippetPath', 'SnippetMode',
     'PlugInSnippetType', 
     'PresetSnippetType', 

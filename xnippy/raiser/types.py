@@ -12,3 +12,16 @@ class DownloadFailedWarning(UserWarning):
 
 class InvalidApproachWarning(UserWarning):
     """Custom warning to indicate that attemp of invalid approach."""
+    pass
+    
+class ComplianceWarning(UserWarning):
+    """Warning raised when the manifest does not comply with the required standards.
+
+    This warning is used to indicate deviations from expected configuration standards
+    in the manifest file. It helps in identifying and debugging issues related to
+    compliance with predefined specifications or requirements.
+    """
+    pass
+
+class ConnectionFailedWarning(UserWarning):
+    pass
