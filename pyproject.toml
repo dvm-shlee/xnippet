@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xnippy"
-version = "0.1.0"
+dynamic = ['version']
 description = "A Python module for dynamic integration and management of extensible code snippets."
 readme = "README.md"
 license = { text = "MIT" }
