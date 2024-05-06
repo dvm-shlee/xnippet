@@ -52,10 +52,10 @@ To initialize `xnippy` effectively within your project, it is crucial to set up 
 ### Example `__init__.py` Configuration
 
 ```python
-from xnippy import Xnippy as ConfigManager
+from xnippy import XnippyManager
 
 __version__ = '0.1.0'
-config = ConfigManager(package_name=__package__,
+config = XnippyManager(package_name=__package__,
                        package_version=__version__,
                        package_file=__file__,
                        config_filename='config.yaml')
