@@ -65,7 +65,7 @@ __all__ = ['__version__', 'config']
 
 ### Key Elements:
 
-- **`ConfigManager`**: An instance of `Xnippy`, which handles the loading and management of configuration settings.
+- **`XnippyManager`**: An instance of `Manager`, which handles the loading and management of configuration settings.
 - **`__version__`**: Specifies the version of your package.
 - **`config`**: Initializes the configuration manager with relevant details about the package and the location of the `config.yaml`.
 
