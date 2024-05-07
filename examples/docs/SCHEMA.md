@@ -1,7 +1,7 @@
-## **YAML Specification Document Guide**
+## **YAML Data Schema Document Guide**
 
 ### **Overview**
-This guide details the YAML specification for validating data fields within a software application or plugin. The specification ensures each data field meets the required standards for data type, format, and allowable values. This document is used primarily in environments where data integrity and compliance are critical.
+This guide details the YAML Data Schema for validating data fields within a software application or plugin. The specification ensures each data field meets the required standards for data type, format, and allowable values. This document is used primarily in environments where data integrity and compliance are critical.
 
 ### **Specification Document Structure**
 
@@ -13,12 +13,12 @@ This guide details the YAML specification for validating data fields within a so
 #### **Fields Definition**
 Each field in the dataset is described in detail, specifying the validation requirements and whether the field is optional.
 
-**Example Specification YAML Document:**
+**Example Schema YAML Document:**
 ```yaml
 package: xnippet>=0.1.0
 plugin: plugin_example
-spec:
-  name: spec_snippet
+schema:
+  name: schema_snippet
   version: 0.0.1
 
   fields:
@@ -94,7 +94,7 @@ spec:
 - **`optional`**: Indicates whether the field is mandatory or optional.
 
 ### **Usage**
-This specification is integrated into the software to validate incoming data, ensuring that all entries conform to the defined standards before being processed or stored. This approach enhances data integrity and reduces errors due to incorrect data formats or values.
+This data schema is integrated into the software to validate incoming data, ensuring that all entries conform to the defined standards before being processed or stored. This approach enhances data integrity and reduces errors due to incorrect data formats or values.
 
 --- 
 
