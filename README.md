@@ -18,9 +18,9 @@ This initiative stems from the need to evolve project features without the overh
 - **Functionality**: Presets simplify configuring plugins with multiple input arguments, ensuring consistent setups and facilitating hyperparameter testing in machine learning projects.
 - **Documentation**: Detailed information is available in our [Preset Documentation](examples/docs/PRESET.md).
 
-### **Specifications (Specs)** -- WIP
+### **Data Schema (Schema)** -- WIP
 - **Purpose**: Tailored for data analysis projects, specifications help define and validate data types and structures, ensuring data integrity and facilitating detailed inspections and validations similar to systems like Pydantic.
-- **Documentation**: Explore our [Specification Documentation](examples/docs/SPEC.md) for more details.
+- **Documentation**: Explore our [Data Schema Documentation](examples/docs/SCHEMA.md) for more details.
 
 ### **Recipes**  -- WIP
 - **Utility**: Recipes allow for the automation of data preprocessing and metadata remapping, streamlining the integration and manipulation of datasets.
@@ -34,7 +34,7 @@ For detailed documentation on each component of the `xnippet` system, please vis
 - [Project Configuration](examples/docs/PROJECT_CONFIG.md)
 - [Plugins](examples/docs/PLUGIN.md)
   - [Presets](examples/docs/PRESET.md)
-  - [Specifications for Dataset](examples/docs/SPEC.md)
+  - [Data Schema](examples/docs/SCHEMA.md)
   - [Recipes for Parsing and Remapping MetaData](examples/docs/RECIPE.md)
 
 Explore these documents to fully understand how each module can be utilized and configured to enrich your project with our versatile plugin architecture.
