@@ -11,11 +11,8 @@ def pytest_configure(config):
 
 @pytest_.fixture(scope="session")
 def presets(request):
-    cur_path = os.curdir
-    for path, dirs, _ in os.walk('.'):
-        if 'xnippet' in path and 'tests' in dirs:
-            pytest_dir = Path(path).absolute() / 'tests'
-            os.chdir(pytest_dir)
+    pytest_dir = Path(__file__).resolve().parent
+    cur_path = Path(os.curdir).resolve()
     
     def return_working_directory():
         if os.path.exists('.xnippet'):
