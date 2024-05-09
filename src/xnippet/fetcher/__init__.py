@@ -9,7 +9,8 @@ Exposes:
                      designated sources.
 """
 
+from .base import Fetcher as BaseFetcher
 from .snippets import Snippets as SnippetFetcher
 from .plugins import PlugIns as PlugInFetcher
 
-__all__ = ['SnippetFetcher', 'PlugInFetcher']
+__all__ = ['BaseFetcher', 'SnippetFetcher', 'PlugInFetcher']

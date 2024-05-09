@@ -1,5 +1,6 @@
 # default configuration for brkraw
 xnippet:
+  version:
   repo:
   - name: xnippet
     url: https://github.com/xoani/xnippet.git

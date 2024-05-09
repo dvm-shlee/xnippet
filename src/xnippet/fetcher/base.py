@@ -11,14 +11,16 @@ Classes:
 
 from __future__ import annotations
 import re
+import logging
 import warnings
 import requests
 from xnippet.formatter import PathFormatter
+from xnippet.raiser import WarnRaiser
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Union
     from typing import List, Tuple, Generator
-
+    from logging import Logger
 
 class Fetcher(PathFormatter):
     """Base class for fetching remote content with methods to authenticate and navigate repositories.
@@ -34,6 +36,7 @@ class Fetcher(PathFormatter):
     """
     _auth: Union[List[Tuple[str, str]], Tuple[str, str]]
     _repos: dict
+    _logger: Logger = logging.getLogger(__name__)
     
     @staticmethod
     def is_connected():
@@ -46,7 +49,8 @@ class Fetcher(PathFormatter):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 Fetcher._fetch_from_url("https://api.github.com") # this will get status code 403
-        except (requests.ConnectTimeout, requests.ConnectionError, requests.RequestException):
+        except (requests.ConnectTimeout, requests.ConnectionError, requests.RequestException) as e:
+            WarnRaiser(Fetcher.is_connected).connection_failed(comment=e)
             return False
         return True
     
@@ -75,7 +79,7 @@ class Fetcher(PathFormatter):
         return None
     
     @staticmethod
-    def _walk_github_repo(repo_url: dict, path: Optional['str'] = None, auth: Tuple[str, str] = None):
+    def _walk_github_repo(repo_url: dict, path: Optional['str'] = None, auth: Optional[Tuple[str, str]] = None):
         """Recursively walk through directories in a GitHub repository to fetch directory and file structure.
 
         Args:
@@ -86,11 +90,13 @@ class Fetcher(PathFormatter):
         Yields:
             dict: A dictionary containing 'path', 'dirs', and 'files' with their respective URLs.
         """
+        Fetcher._logger.debug(" + Entered to Fetcher._walk_github_repo")
+        Fetcher._logger.debug(" - repo_url: %s. path: %s, auth=%s", repo_url, path, True if auth else False)
         base_url = Fetcher._decode_github_repo(repo_url=repo_url, path=path)
         return Fetcher._walk_dir(url=base_url, auth=auth)
     
     @staticmethod
-    def _walk_dir(url, path='', auth: Tuple[str, str] = None):
+    def _walk_dir(url, path='', auth: Optional[Tuple[str, str]] = None):
         """Walk through a specific directory in a repository.
 
         Args:
@@ -101,7 +107,9 @@ class Fetcher(PathFormatter):
         Yields:
             dict: A dictionary containing the path, directories, and files within the directory.
         """
+        Fetcher._logger.debug(" + Entered to Fetcher._walk_dir_repo, auth=%s", True if auth else False)
         if contents := Fetcher._fetch_from_url(url=url, auth=auth):
+            Fetcher._logger.debug(" - Fetched contents from url: %s", url)
             dirs, files = Fetcher._fetch_directory_contents(contents.json())
             yield {'path':path, 
                     'dirs':{d['name']:d['url'] for d in dirs}, 
@@ -122,12 +130,16 @@ class Fetcher(PathFormatter):
         Returns:
             tuple: A tuple containing lists of directories and files.
         """
+        logger = Fetcher._logger
+        logger.debug(" + Fetching contents in directory, and classify them into dirs and files")
         dirs, files = [], []
         for item in contents:
             if item['type'] == 'dir':
                 dirs.append(item)
             elif item['type'] == 'file':
                 files.append(item)
+            logger.debug("  + itemName: %s, type: %s", item['name'], item['type'])
+        logger.debug("  :: dirs: %s, files: %s", [d['name'] for d in dirs], [f['name'] for f in files])
         return dirs, files
     
     @staticmethod
@@ -143,13 +155,16 @@ class Fetcher(PathFormatter):
         """
         ptrn_github = r'https://(?:[^/]+\.)?github\.com/(?P<owner>[^/]+)/(?P<repo>[^/.]+)(?:\.git)?(?:/(?P<path>.*))?'
         if matched := re.match(ptrn_github, repo_url):
+            Fetcher._logger.debug(" + Repo URL pattern matched: %s", matched)
             owner = matched['owner']
             repo = matched['repo']
             if matched['path']:
                 path_ = matched['path']
                 path = '/'.join([path_, path]) if path_ else path
             url = f"https://api.github.com/repos/{owner}/{repo}/contents"
+            Fetcher._logger.debug(" - Decoded URL: %s", url)
             return f"{url}/{path}" if path else url
+        Fetcher._logger.debug(" + Repo URL pattern does not match: %s", repo_url)
     
     @staticmethod
     def _fetch_from_url(url: str, auth: Tuple[str, str] = None) -> Optional[requests.Response]:
@@ -162,21 +177,26 @@ class Fetcher(PathFormatter):
         Returns:
             Optional[requests.Response]: The response object if successful, otherwise None.
         """
+        Fetcher._logger.debug(" + Sending request to %s", url)
         response = requests.get(url, auth=auth)
+        Fetcher._logger.debug(" - Request Status Code: %s", response.status_code)
         if response.status_code == 200:
+            Fetcher._logger.debug(" - Returning response object.")
             return response
         else:
-            warnings.warn(f"Failed to retrieve contents: {response.status_code}.", UserWarning)
+            warner = WarnRaiser(Fetcher._fetch_from_url)
+            comment = [f"Status Code: {response.status_code}"]
             if response.status_code == 403:
-                warnings.warn(f"It potentially due to incorect repo address or exceed limit of request."
-                              " Try use API token for giigle", UserWarning)
-            
+                comment.append("This may be due to an incorrect repository address or exceeding the request limit. "
+                               "Consider using an API token for authentication.")
+                warner.data_fetch_failed(comment=' '.join(comment))
+            Fetcher._logger.debug(" - Returning 'None'.")
             return None
 
     @staticmethod
     def _download_buffer(url: dict,
                          chunk_size: int = 8192,
-                         auth: Tuple[str, str] = None) -> Union[Generator, bool]:
+                         auth: Optional[Tuple[str, str]] = None) -> Union[Generator, bool]:
         """Download file content from a URL in buffered chunks.
 
         Args:
@@ -188,9 +208,12 @@ class Fetcher(PathFormatter):
             Union[Generator, bool]: A generator yielding file chunks if successful, False on error.
         """
         try:
+            Fetcher._logger.debug(" + Downloading %s [ChunkSize: %s ;auth=%s]", url, chunk_size, True if auth else False)
             response = requests.get(url, stream=True, auth=auth)
             response.raise_for_status()
+            Fetcher._logger.debug(" - Success")
             return response.iter_content(chunk_size=chunk_size)
         except requests.RequestException as e:
-            warnings.warn(f'Error downloading the file: {e}')
+            
+            WarnRaiser(Fetcher._download_buffer).custom(f'Error downloading the file: {e}')
             return False

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Tuple
 
-class Spec(Snippet):
+class Schema(Snippet):
     def __init__(self,
                  contents: dict, 
                  auth: Optional[Tuple[str, str]] = None, 

@@ -166,3 +166,4 @@ cython_debug/
 .xnippet
 tests/*.ipynb
 .vscode
+*.log

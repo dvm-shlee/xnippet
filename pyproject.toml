@@ -37,6 +37,7 @@ urls = {Homepage = "https://xoani.github.io"}
 
 [project.optional-dependencies]
 dev = [
+    "numpy",
     "flake8",
     "pytest",
     "nbmake",
@@ -45,5 +46,15 @@ dev = [
 
 # Additional configuration specific to hatch can go under 'tool.hatch.*'
 [tool.hatch.version]
-path = "xnippet/__init__.py"
+path = "src/xnippet/__init__.py"
 style = "pep440"
+
+[tool.hatch.build.targets.sdist]
+include = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xnippet"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"

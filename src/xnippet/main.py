@@ -6,6 +6,7 @@ requested by the user through CLI to create them in the home folder.
 """
 
 from __future__ import annotations
+import logging
 import yaml
 import shutil
 from packaging import version
@@ -19,6 +20,8 @@ if TYPE_CHECKING:
     from .types import SnippetMode, StorageMode, SnippetPath, PlugInSnippetType
     from .types import PlugInFetcherType, VersionType
     from typing import List, Union, Optional
+    from logging import Logger
+    
 
 class Manager(PathFormatter):
     """Manages the configuration settings for the application.
@@ -29,7 +32,7 @@ class Manager(PathFormatter):
     """ 
     config: dict = {}
     _home_dir: 'Path'
-    _default_dir: 'Path'
+    _package_dir: 'Path'
     _local_dir: 'Path'
     _global_dir: 'Path'
     _config_dir: 'Path'
@@ -38,13 +41,14 @@ class Manager(PathFormatter):
     _package_version: VersionType
     _fetcher: PlugInFetcherType
     _compatible_snippets: List[SnippetMode] = ['plugin']
+    _logger: Logger = logging.getLogger(__name__)
     
     def __init__(self, 
                  package_name: str, 
                  package_version: str, 
                  package__file__: Union['Path', str],
                  config_path: Optional[str] = None,
-                 config_filename: str = 'config.yaml') -> None:
+                 config_filename: str = 'confnig.yaml') -> None:
         """Initializes the configuration manager.
 
         This constructor sets up paths for the home directory, global and local configuration directories,
@@ -56,7 +60,7 @@ class Manager(PathFormatter):
         """
         self._package_name = package_name
         self._home_dir = self._resolve('~')
-        self._default_dir = self._resolve(package__file__).parent / config_path if config_path else self._resolve(package__file__).parent
+        self._package_dir = self._resolve(package__file__).parent / config_path if config_path else self._resolve(package__file__).parent
         self._local_dir = self._resolve(Path.cwd() / f'.{self._package_name}')
         self._global_dir = self._resolve(self._home_dir / f'.{self._package_name}')
         self._fname = config_filename
@@ -68,22 +72,46 @@ class Manager(PathFormatter):
         """Loads an existing configuration file or creates a new one if it does not exist, filling the 'config' dictionary with settings."""
         self._set_config_dir()
         config_file = self.config_dir / self._fname
-        if not config_file.exists() and self.config_dir == self._default_dir:
-            
-            comment = "Preparing default configuration. Use 'create_config' method to initialize."
-            WarnRaiser(self.reload).config_not_found(self.config_dir, comment=comment)
-            config_file = self._resolve(__file__).parent / 'yaml/config.yaml'
+        if not config_file.exists() and self.config_dir == self._package_dir:
+            WarnRaiser(self.reload).config_file(self.config_dir, 
+                                                exists=False, 
+                                                comment="Import xnippet's default config file.")
+            config_file = self._resolve(__file__).parent / 'config/main.yaml'
         with open(config_file, 'r') as f:
             self.config = yaml.safe_load(f)
+            self._logger.debug("Configuration imported from: %s", config_file)
         self._reload_plugin_fetcher()
-        
+    
     def _set_config_dir(self):
+        """Sets the configuration directory based on the existence and type of configuration files.
+
+        This method determines the appropriate configuration directory by checking the type and presence of configuration files.
+        If both local and global configuration files exist (indicated by a list), the local directory is used.
+        If only one type of configuration file exists (indicated by a string), the directory is set based on the type ('local' or 'global').
+        If no configuration files exist, a warning is issued, and the default configuration directory is used.
+
+        Attributes:
+            config_created: Can be a list, string, or None. A list indicates both local and global configurations are available,
+                            a string indicates only one configuration is available, and None indicates no configurations are found.
+        
+        Side Effects:
+            Sets self._config_dir to the appropriate directory based on the existing configuration.
+            Logs debug messages about the configuration status and actions taken.
+            Raises a warning if no configuration files are found, advising the creation of a configuration file.
+
+        Raises:
+            WarnRaiser: If no configuration file exists, this raises a configurable warning through the WarnRaiser class.
+        """
         if isinstance(self.config_created, list):
+            self._logger.debug("Config folders have been created for both %s and %s exist.", *self.config_created)
             self._config_dir = self._local_dir
         elif isinstance(self.config_created, str):
+            self._logger.debug("The '%s' config folder has been created.", self.config_created.capitalize())
             self._config_dir = self._local_dir if self.config_created == 'local' else self._global_dir
         else:
-            self._config_dir = self._default_dir
+            self._logger.debug("Config folder was not created, "
+                               "using package directory (%s) and search config file.", self._package_dir)
+            self._config_dir = self._package_dir
 
     def _reload_plugin_fetcher(self) -> None:
         """Retrieves a configured SnippetsFetcher for the specified mode to handle fetching of snippets.
@@ -137,7 +165,9 @@ class Manager(PathFormatter):
         config_file = config_dir / self._fname
         if config_file.exists():
             if not force:
-                WarnRaiser(self.create_config).config_exist_when_create()
+                WarnRaiser(self.create_config).config_file(config_dir=config_dir, 
+                                                           exists=True, 
+                                                           comment="Use the force option to overwrite.")
                 return False
         with open(config_file, 'w') as f:
             yaml.safe_dump(self.config, f, sort_keys=False)
@@ -203,7 +233,7 @@ class Manager(PathFormatter):
                 plugin_version: Optional[str] = None, 
                 yes: bool = False, target: StorageMode = 'local'):
         if not self.config_created:
-            WarnRaiser(self.install).config_not_found(self.config_dir)
+            WarnRaiser(self.install).config_file(self.config_dir, exists=False)
             if yes or IOFormatter.yes_or_no(f"Do you want to proceed creating '{target}' configuration?"):
                 self.create_config(target=target)
         
@@ -211,7 +241,7 @@ class Manager(PathFormatter):
         plugin_dir, _ = self._check_dir()
         plugin_name = f'{plugin_name}_{plugin_version}' if plugin_name else plugin_name
         if (plugin_dir / plugin_name).exists():
-            WarnRaiser(self.install).file_exist()
+            WarnRaiser(self.install).config_file(self.config_dir, exists=True)
             if yes or IOFormatter.yes_or_no(f"Do you want to overwrite plugin '{target}' configuration?"):
                 plugin.download(dest=plugin_dir, force=yes)
                 return True

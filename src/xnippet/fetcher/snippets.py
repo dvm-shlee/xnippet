@@ -2,7 +2,7 @@
 
 This module defines a `Snippets` class which aggregates snippets from various sources,
 handles their synchronization, and ensures that the snippets are up-to-date according to
-user-specified modes (plugin, preset, bids, app). It supports operations on snippets
+user-specified modes (plugin, preset, recipe, schema). It supports operations on snippets
 fetched from both local file systems and remote repositories, offering features to check
 connectivity, fetch content, and validate snippet integrity.
 
@@ -16,7 +16,7 @@ import warnings
 from pathlib import Path
 from .base import Fetcher
 from xnippet.raiser import WarnRaiser
-from xnippet.snippet import PlugInSnippet, RecipeSnippet, SpecSnippet, PresetSnippet
+from xnippet.snippet import PlugInSnippet, RecipeSnippet, SchemaSnippet, PresetSnippet
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
@@ -62,7 +62,8 @@ class Snippets(Fetcher):
         self._set_auth()
         self._fetch_local_contents()
         
-    def _inspect_repos(self, repos):
+    @staticmethod
+    def _inspect_repos(repos):
         inspected = {}
         for repo in repos:
             # Check if both 'name' and 'url' keys exist in the repo dictionary
@@ -71,7 +72,7 @@ class Snippets(Fetcher):
             
             if not name or not url:
                 message = f"Given repo '{name}' in configuration file does not comply with the expected configuration."
-                WarnRaiser(self._inspect_repos).custom(message, UserWarning)
+                WarnRaiser(Snippets._inspect_repos).custom(message, UserWarning)
                 inspected[name] = None
             else:
                 inspected[name] = repo
@@ -79,8 +80,8 @@ class Snippets(Fetcher):
         # Filter out None values and return the list of valid repos
         filtered_repo = [repo for repo in inspected.values() if repo is not None]
         if not filtered_repo:
-            message = "No valid repo configurations remain; nothing to download."
-            WarnRaiser(self._inspect_repos).custom(message, UserWarning)
+            message = "No valid repo configurations found; nothing to download."
+            WarnRaiser(Snippets._inspect_repos).custom(message, UserWarning)
         return filtered_repo
         
     def _fetch_local_contents(self) -> Optional[list]:
@@ -143,14 +144,14 @@ class Snippets(Fetcher):
         """Determines the snippet class based on the operational mode.
 
         Returns:
-            Type[Snippet]: Returns the class type corresponding to the operational mode (Plugin, Preset, Spec, Recipe, App).
+            Type[Snippet]: Returns the class type corresponding to the operational mode (Plugin, Preset, Schema, Recipe).
         """
         if self.mode == 'plugin':
             return PlugInSnippet
         elif self.mode == 'preset':
             return PresetSnippet
-        elif self.mode == 'spec':
-            return SpecSnippet
+        elif self.mode == 'schema':
+            return SchemaSnippet
         elif self.mode == 'recipe':
             return RecipeSnippet
     
