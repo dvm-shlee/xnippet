@@ -47,12 +47,3 @@ class Bytes:
 
         unit = int(len(str(file_size)) / 3)
         return Bytes.convert_unit(file_size, unit), unit_dict[unit]
-
-    @staticmethod
-    def print_internal_error(io_handler=None):
-        import traceback
-        import sys
-        if io_handler is None:
-            io_handler = sys.stderr
-        traceback.print_exception(*sys.exc_info(),
-                                file=io_handler)

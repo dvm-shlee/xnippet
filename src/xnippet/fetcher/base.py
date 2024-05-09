@@ -194,13 +194,13 @@ class Fetcher(PathFormatter):
             return None
 
     @staticmethod
-    def _download_buffer(url: dict,
+    def _download_buffer(url: str,
                          chunk_size: int = 8192,
                          auth: Optional[Tuple[str, str]] = None) -> Union[Generator, bool]:
         """Download file content from a URL in buffered chunks.
 
         Args:
-            url (dict): The URL of the file to download.
+            url (str): The URL of the file to download.
             chunk_size (int): The size of each chunk in bytes.
             auth (Tuple[str, str]): Optional authentication credentials.
 

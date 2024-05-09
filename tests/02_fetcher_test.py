@@ -2,8 +2,8 @@ import logging
 import yaml
 from pathlib import Path
 
-def test_base_fetcher(xnippet, github_repo, auth):
-    logging.info(f"++ Case 1. Test BaseFetcher.")
+def test_base_fetcher(colored, xnippet, github_repo, auth):
+    logging.info(colored("++ Case 1. Test BaseFetcher.", 'blue'))
     BaseFetcher = xnippet.fetcher.BaseFetcher
     
     logging.info(f" + Network connection test.")
@@ -22,8 +22,8 @@ def test_base_fetcher(xnippet, github_repo, auth):
     result = yaml.safe_load(bff)
     logging.info(" - Downloaded PlugIn: %s", result['plugin']['name'])
 
-def test_snippets_fetcher(xnippet, auth):
-    logging.info(f"++ Case 2. Test SnippetFetcher.")
+def test_snippets_fetcher(colored, xnippet, auth):
+    logging.info(colored('++ Case 2. Test SnippetFetcher.', 'blue'))
     SnippetsFetcher = xnippet.fetcher.SnippetsFetcher
     config = Path(__file__).parents[1] / 'src' / 'xnippet' / 'config' / 'main.yaml'
     logging.info(f" + Load default config: %s", config)

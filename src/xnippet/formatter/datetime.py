@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 class DateTime:
     @staticmethod
-    def string_to_datetime(datetime_str):
+    def string_to_datetime(datetime_str: str):
         """Convert a datetime string into separate date and time objects.
 
         Args:

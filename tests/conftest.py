@@ -4,6 +4,7 @@ import shutil
 import pytest as pytest_
 import xnippet as xnippet_
 from pathlib import Path
+from xnippet.formatter import IOFormatter
 
 
 def pytest_configure(config):
@@ -62,3 +63,7 @@ def github_repo():
 def auth():
     auth = ('token', os.environ["XNIPPET_TOKEN"]) if "XNIPPET_TOKEN" in os.environ.keys() else None
     return auth
+
+@pytest_.fixture(scope='session')
+def colored():
+    return IOFormatter.colored
