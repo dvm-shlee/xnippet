@@ -167,3 +167,4 @@ cython_debug/
 tests/*.ipynb
 .vscode
 *.log
+.python-version
