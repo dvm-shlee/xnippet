@@ -1,5 +1,6 @@
 import logging
 import yaml
+from pathlib import Path
 
 def test_base_fetcher(xnippet, github_repo, auth):
     logging.info(f"++ Case 1. Test BaseFetcher.")
@@ -21,10 +22,15 @@ def test_base_fetcher(xnippet, github_repo, auth):
     result = yaml.safe_load(bff)
     logging.info(" - Downloaded PlugIn: %s", result['plugin']['name'])
 
-def test_snippets_fetcher(xnippet, github_repo, auth):
-    logging.info(f"++ Case 2. Test SnippetsFetcher.")
-    SnippetsFethcer = xnippet.fetcher.SnippetsFethcer
-    
+def test_snippets_fetcher(xnippet, auth):
+    logging.info(f"++ Case 2. Test SnippetFetcher.")
+    SnippetsFetcher = xnippet.fetcher.SnippetsFetcher
+    config = Path(__file__).parents[1] / 'src' / 'xnippet' / 'config' / 'main.yaml'
+    logging.info(f" + Load default config: %s", config)
+    with open(config, 'r') as f:
+        repo = yaml.safe_load(f)['xnippet']['repo']
+    filtered_repo = SnippetsFetcher._inspect_repos(repo)
+    assert len(filtered_repo) == len(repo)
     
     
 # def test_pluginfetcher(pytest, xnippet, presets):

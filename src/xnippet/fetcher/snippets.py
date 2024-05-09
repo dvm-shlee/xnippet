@@ -13,6 +13,7 @@ Classes:
 from __future__ import annotations
 import os
 import warnings
+import logging
 from pathlib import Path
 from .base import Fetcher
 from xnippet.raiser import WarnRaiser
@@ -22,7 +23,8 @@ if TYPE_CHECKING:
     from typing import Optional
     from typing import List
     from xnippet.types import SnippetType, SnippetMode, SnippetPath, StorageMode, VersionType
-
+    from logging import Logger
+    
 
 class Snippets(Fetcher):
     """Manages the aggregation of snippets from various sources based on the specified mode.
@@ -38,6 +40,7 @@ class Snippets(Fetcher):
     _fetched: bool = False
     _remote_snippets: List[SnippetType] = []
     _local_snippets: List[SnippetType] = []
+    _logger: Logger = logging.getLogger(__name__)
     
     def __init__(self, 
                  repos: dict,
@@ -65,16 +68,17 @@ class Snippets(Fetcher):
     @staticmethod
     def _inspect_repos(repos):
         inspected = {}
-        for repo in repos:
-            # Check if both 'name' and 'url' keys exist in the repo dictionary
+        for i, repo in enumerate(repos):
+            Snippets._logger.debug(" + Check repo id: %d", i)
             name = repo.get('name')
             url = repo.get('url')
             
             if not name or not url:
-                message = f"Given repo '{name}' in configuration file does not comply with the expected configuration."
+                message = f" Given repo '{name}' in configuration file does not comply with the expected configuration."
                 WarnRaiser(Snippets._inspect_repos).custom(message, UserWarning)
                 inspected[name] = None
             else:
+                Snippets._logger.debug(" + name: %s, url: %s", name, url)
                 inspected[name] = repo
 
         # Filter out None values and return the list of valid repos

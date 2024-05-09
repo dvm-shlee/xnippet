@@ -10,7 +10,7 @@ Exposes:
 """
 
 from .base import Fetcher as BaseFetcher
-from .snippets import Snippets as SnippetFetcher
+from .snippets import Snippets as SnippetsFetcher
 from .plugins import PlugIns as PlugInFetcher
 
-__all__ = ['BaseFetcher', 'SnippetFetcher', 'PlugInFetcher']
+__all__ = ['BaseFetcher', 'SnippetsFetcher', 'PlugInFetcher']
