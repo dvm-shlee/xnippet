@@ -2,9 +2,8 @@ from __future__ import annotations
 from .snippets import Snippets as SnippetsFetcher
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Optional
     from typing import List
-    from xnippet.types import SnippetType, SnippetPath, StorageMode
+    from xnippet.types import SnippetPath
 
 class PlugIns(SnippetsFetcher):
     """Manages the aggregation of PlugIn snippets."""
