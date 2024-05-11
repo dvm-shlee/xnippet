@@ -1,15 +1,12 @@
 from typing import Type, Optional, Union
 from typing import Literal, Tuple, List
 from pathlib import Path
-from .main import Manager
-from .fetcher import SnippetFetcher
+from .manager import Manager
+from .fetcher import SnippetsFetcher
 from .fetcher import PlugInFetcher
 from .fetcher.base import Fetcher
-from .snippet.base import Snippet
+from .snippet import SimpleSnippet
 from .snippet import PlugInSnippet
-from .snippet import PresetSnippet
-from .snippet import RecipeSnippet
-from .snippet import SpecSnippet
 from packaging.version import _Version as VersionType
 
 class Resource:
@@ -24,11 +21,9 @@ StorageMode = Literal['local', 'global']
 
 FetcherType = Type[Fetcher]
 
-SnippetsFetcherType = Type[SnippetFetcher]
+SnippetsFetcherType = Type[SnippetsFetcher]
 
 PlugInFetcherType = Type[PlugInFetcher]
-
-SnippetType = Type[Snippet]
 
 SnippetPath = Tuple[Optional[Path], bool]
 
@@ -36,21 +31,15 @@ SnippetMode = Literal[
     'plugin', 'preset', 'spec', 'recipe'
     ]
 
+SimpleSnippetType = Type[SimpleSnippet]
+
 PlugInSnippetType = Type[PlugInSnippet]
 
-PresetSnippetType = Type[PresetSnippet]
-
-RecipeSnippetType = Type[RecipeSnippet]
-
-SpecSnippetType = Type[SpecSnippet]
 
 __all__ = [
     'ResourceType', 'VersionType',
     'XnippetManagerType', 'StorageMode',
-    'FetcherType', 'SnippetsFetcherType', 'PlugInFetcherType',
-    'SnippetType', 'SnippetPath', 'SnippetMode',
+    'FetcherType', 'SnippetsFetcherType', 'PlugInFetcherType', 'SnippetPath', 'SnippetMode',
+    'SimpleSnippetType', 
     'PlugInSnippetType', 
-    'PresetSnippetType', 
-    'RecipeSnippetType', 
-    'SpecSnippetType',
     ]

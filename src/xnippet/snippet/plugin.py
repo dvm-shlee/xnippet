@@ -16,7 +16,7 @@ import yaml
 import inspect
 from pathlib import Path
 from tqdm import tqdm
-from .base import Snippet
+from .simple import Simple
 from xnippet.raiser import WarnRaiser
 from xnippet.module import ModuleLoader
 from xnippet.module import ModuleInstaller
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Dict, Optional, Union
     
 
-class PlugIn(Snippet):
+class PlugIn(Simple):
     """Handles the inspection and management of plugins, either locally or from remote sources.
     
     This class supports dynamic loading of plugins into memory for immediate use without the need for disk storage,

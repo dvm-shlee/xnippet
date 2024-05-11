@@ -17,12 +17,12 @@ import logging
 from pathlib import Path
 from .base import Fetcher
 from xnippet.raiser import WarnRaiser
-from xnippet.snippet import PlugInSnippet, RecipeSnippet, SchemaSnippet, PresetSnippet
+from xnippet.snippet import SimpleSnippet, PlugInSnippet
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
     from typing import List
-    from xnippet.types import SnippetType, SnippetMode, SnippetPath, StorageMode, VersionType
+    from xnippet.types import SimpleSnippetType, SnippetMode, SnippetPath, StorageMode, VersionType
     from logging import Logger
     
 
@@ -38,8 +38,8 @@ class Snippets(Fetcher):
     package_version: VersionType
     is_cache: bool
     _fetched: bool = False
-    _remote_snippets: List[SnippetType] = []
-    _local_snippets: List[SnippetType] = []
+    _remote_snippets: List[SimpleSnippetType] = []
+    _local_snippets: List[SimpleSnippetType] = []
     _logger: Logger = logging.getLogger(__name__)
     
     def __init__(self, 
@@ -152,12 +152,8 @@ class Snippets(Fetcher):
         """
         if self.mode == 'plugin':
             return PlugInSnippet
-        elif self.mode == 'preset':
-            return PresetSnippet
-        elif self.mode == 'schema':
-            return SchemaSnippet
-        elif self.mode == 'recipe':
-            return RecipeSnippet
+        elif self.mode == 'simple':
+            return SimpleSnippet
     
     @property
     def remote(self):

@@ -45,10 +45,10 @@ class Manager(PathFormatter):
     
     def __init__(self, 
                  package_name: str, 
-                 package_version: str, 
+                 package_version: str,
                  package__file__: Union['Path', str],
                  config_path: Optional[str] = None,
-                 config_filename: str = 'confnig.yaml') -> None:
+                 config_filename: str = 'config.yaml') -> None:
         """Initializes the configuration manager.
 
         This constructor sets up paths for the home directory, global and local configuration directories,
@@ -234,7 +234,7 @@ class Manager(PathFormatter):
                 yes: bool = False, target: StorageMode = 'local'):
         if not self.config_created:
             WarnRaiser(self.install).config_file(self.config_dir, exists=False)
-            if yes or IOFormatter.yes_or_no(f"Do you want to proceed creating '{target}' configuration?"):
+            if yes or IOFormatter.ask_yes_or_no(f"Do you want to proceed creating '{target}' configuration?"):
                 self.create_config(target=target)
         
         plugin = self.get(plugin_name=plugin_name, plugin_version=plugin_version, remote=True)
@@ -242,7 +242,7 @@ class Manager(PathFormatter):
         plugin_name = f'{plugin_name}_{plugin_version}' if plugin_name else plugin_name
         if (plugin_dir / plugin_name).exists():
             WarnRaiser(self.install).config_file(self.config_dir, exists=True)
-            if yes or IOFormatter.yes_or_no(f"Do you want to overwrite plugin '{target}' configuration?"):
+            if yes or IOFormatter.ask_yes_or_no(f"Do you want to overwrite plugin '{target}' configuration?"):
                 plugin.download(dest=plugin_dir, force=yes)
                 return True
             return False

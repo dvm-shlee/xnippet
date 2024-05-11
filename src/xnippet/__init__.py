@@ -1,4 +1,4 @@
-from .main import Manager as XnippetManager
+from .manager import Manager as XnippetManager
 from .config import setup_logging
     
     

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 class IO:
     @staticmethod
-    def yes_or_no(question):
+    def ask_yes_or_no(question):
         while True:
             reply = str(input(question + ' (y/n): ')).lower().strip()
             if reply[:1] == 'y':

@@ -36,6 +36,8 @@ meta:
   citation: "CITATION.cff"
 
 source:
+  external:
+    - matlab
   include:
     - utils.py
   entry_point: plugin_example.py:example_func
