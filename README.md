@@ -1,31 +1,21 @@
 # Xnippet - Extendable Plugin Architecture with Snippets for Python
 
-Welcome to `xnippet`, a robust framework designed to facilitate the integration of a plugin architecture into your projects. This system allows for the dynamic enhancement and customization of applications through plugins, enhancing project sustainability without expanding the core codebase. `xnippet` is ideal for those looking to add features for specific use cases or develop community-driven extensions while maintaining backward compatibility and minimizing dependencies.
+**Xnippet** is a standalone module designed to enhance the extensibility of Python-based projects, particularly in data analysis. Its key features include:
 
-This initiative stems from the need to evolve project features without the overhead of managing growing dependencies, thereby reducing maintenance challenges and allowing developers to focus on stabilizing and enriching the main codebase.
+- **Extensibility**: Functions as a new type of package manager that uses your GitHub repository for code version control, allowing the addition of features without modifying the existing codebase or increasing dependencies.
+- **Standardized Configuration**: Facilitates consistent settings across various environments and projects. Configurations and snippets can be inherited by subdirectories, maintaining uniformity across projects within the same directory. This feature is inspired by tools like pyenv.
+- **Sharing Code Snippets**: Enables a live searchable interface for code snippets stored in specified GitHub repositories. This feature supports the importing and direct use of snippets without local installation, enhancing online plugin functionality.
+- **Dependencies Control**: Manages dependencies on a per-snippet basis, checking and resolving dependencies during download or online import. This includes resolving Python dependencies via PyPI, managing snippet dependencies within your repository, and verifying the availability of external executables.
 
-## **Plugins**
-- **Independence**: Plugins can function as standalone applications, useful for personal data analysis projects. For dynamic functionality extension, your project should specify integration specifications, which ensure seamless plugin adoption.
-- **Example**: For a practical implementation, see [BrkRaw](https://github.com/brkraw/brkraw.git), which utilizes `xnippet` for enhanced plugin integration.
-- **Documentation**: Learn more about setting up and configuring plugins in our [Plugin Documentation](examples/docs/PLUGIN.md).
+## **Types of Snippets**
+### Simple Snippets:
 
-## Features of xnippet's Plugin Architecture
-- **Snippets**: Unlike traditional plugin systems that require separate package installations, `xnippet` uses snippets, allowing for instant updates and modifications without restarting Python kernels. This approach saves significant development time and simplifies testing.
-- **GitHub Integration**: `xnippet` leverages GitHub as a repository server, enabling real-time updates and collaboration without the need for repackaging and redistributing through channels like PyPi. This feature ensures that new functionalities are instantly available without the need for updating the main package.
-- **Simplicity**: Our plugin architecture avoids the complexities of `setup.py`, `setup.cfg`, or `pyproject.toml` files, focusing instead on straightforward GitHub-based sharing and version control.
+- Python code that can be seamlessly imported and used within any module without specific entry-points.
 
-### **Presets** -- WIP
-- **Functionality**: Presets simplify configuring plugins with multiple input arguments, ensuring consistent setups and facilitating hyperparameter testing in machine learning projects.
-- **Documentation**: Detailed information is available in our [Preset Documentation](examples/docs/PRESET.md).
+### **Plugin Snippets**:
 
-### **Data Schema (Schema)** -- WIP
-- **Purpose**: Tailored for data analysis projects, specifications help define and validate data types and structures, ensuring data integrity and facilitating detailed inspections and validations similar to systems like Pydantic.
-- **Documentation**: Explore our [Data Schema Documentation](examples/docs/SCHEMA.md) for more details.
-
-### **Recipes**  -- WIP
-- **Utility**: Recipes allow for the automation of data preprocessing and metadata remapping, streamlining the integration and manipulation of datasets.
-- **Documentation**: Learn how to create and use recipes with our [Recipe Documentation](examples/docs/RECIPE.md).
-
+- Builds on Simple Snippets by adding entry-points to serve specific roles, ideal for developing Python packages with a straightforward plugin architecture.
+- Employs YAML for manifest packaging, with each snippet consisting of a single Python file and an accompanying manifest.
 ## Getting Started
 To begin integrating `xnippet` into your project, refer to our comprehensive [Project Configuration Guide](examples/docs/PROJECT_CONFIG.md).
 
