@@ -24,9 +24,9 @@ class Simple(Fetcher):
 
     def __repr__(self):
         if self.is_valid:
-            repr = f"PlugInSnippet<{self.package}>::{self.name}=={self.version}"
+            repr = f"SimpleSnippet<{self.package}>::{self.name}=={self.version}"
             if self._remote:
                 repr += '+InMemory' if self._activated else f'+Remote[{self._repository}]'
             return repr
         else:
-            return "PlugInSnippet<?>::InValidPlugin"
+            return "SimpleSnippet<?>::InValidPlugin"
