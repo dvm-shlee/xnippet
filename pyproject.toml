@@ -32,7 +32,7 @@ dependencies = [
     "tqdm>=4.66.1",
     "requests>=2.31.0"
 ]
-urls = {Homepage = "https://xoani.github.io"}
+urls = {Homepage = "https://dvm-shlee.github.io"}
 
 [project.optional-dependencies]
 dev = [
