@@ -20,6 +20,7 @@ from .simple import Simple
 from xnippet.raiser import WarnRaiser
 from xnippet.module import ModuleLoader
 from xnippet.module import ModuleInstaller
+from xnippet.formatter import StringFormatter
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Tuple, Dict, Optional, Union
@@ -36,7 +37,7 @@ class PlugIn(Simple):
                            "files": list of paths or download urls of file contents,
                            "dirs": list of paths or access urls of diretory contents}
     """
-    _required_key: list = ['plugin', 'source', 'dependencies'] #, 'package']
+    _required_key: list = ['package', 'type', 'name', 'source', 'version', 'description', 'dependencies']
     _remote: bool
     _activated: bool
     _dependencies_tested: bool = False 
@@ -109,10 +110,11 @@ class PlugIn(Simple):
             
     def _set_params(self):
         try:
-            info = self._manifest['plugin']
+            info = self._manifest
             self.parse_version(info['version'])
             self.name = info['name']
             self.package = info['package'] if 'package' in info.keys() else None
+            self.type = info['type']
             self.is_valid = True
         except (KeyError, AttributeError):
             self.is_valid = False
@@ -137,8 +139,6 @@ class PlugIn(Simple):
         Raises:
             ValueError: If the provided arguments do not match the required function signature.
         """
-        if not self._activated:
-            self.download()
         sig = inspect.signature(self._imported_object)
         try:
             # This will raise a TypeError if the arguments do not match the function signature
@@ -208,6 +208,8 @@ class PlugIn(Simple):
         Returns:
             The imported method from the module.
         """
+        if not self._activated:
+            self.download()
         # run include dependency
         if include := self._manifest['source']['include'] if 'include' in self._manifest['source'] else None:
             if isinstance(include, str):
@@ -231,11 +233,29 @@ class PlugIn(Simple):
             self._include[self.name] = module
             return getattr(module, target)
         
+    def help(self, drop: Union[list, str, None] = None):
+        sigs = inspect.signature(self._imported_object).parameters.items()
+        if isinstance(drop, str):
+            drop = [drop]
+        sigs = {s:v for s, v in sigs if s not in drop}.items() if drop else sigs
+        
+        max_char = StringFormatter.calc_max_char([s for s, _ in sigs]) + 2
+        max_type = StringFormatter.calc_max_char([v.annotation for _, v in sigs]) + 2
+        max_default = StringFormatter.calc_max_char([v.default for _, v in sigs]) + 4
+        docstring = [f"{'Keyword'.center(max_char)}|{'Type'.center(max_type)}|{'Default'.center(max_default)}"]
+        docstring.append("-"*max_char + "+" + "-"*max_type + "+" + "-"*max_default)
+        for k, v in sigs:
+            default = f" '{v.default}'" if v.default else ' None'
+            value_type = f" {v.annotation}"
+            docstring.append(f"{k.ljust(max_char)}|{value_type.ljust(max_type)}|"
+                             f"{default.ljust(max_default)}")
+        print("\n".join(docstring))
+        
     def __repr__(self):
         if self.is_valid:
-            repr = f"PlugInSnippet<{self.package}>::{self.name}=={self.version}"
+            repr = f"PlugInSnippet[{self.package}]::{self.name}=={self.version}"
             if self._remote:
-                repr += '+InMemory' if self._activated else f'+Remote[{self._repository}]'
+                repr += '+InMemory' if self._activated else f'+Remote @{self._repository}'
             return repr
         else:
             return "PlugInSnippet<?>::InValidPlugin"

@@ -9,12 +9,12 @@ from __future__ import annotations
 import logging
 import yaml
 import shutil
-from packaging import version
 from pathlib import Path
 from .fetcher import PlugInFetcher
 from typing import TYPE_CHECKING
 from .formatter import PathFormatter
 from .formatter import IOFormatter
+from .formatter import version
 from .raiser import WarnRaiser
 if TYPE_CHECKING:
     from .types import SnippetMode, StorageMode, SnippetPath, PlugInSnippetType

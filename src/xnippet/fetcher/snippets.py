@@ -134,7 +134,7 @@ class Snippets(Fetcher):
         for repo_id, content in enumerate(contents):
             for c in content:
                 if remote:
-                    snippets.append(self._snippet(contents=c, auth=self._auth[repo_id], remote=remote))
+                    snippets.append(self._snippet(contents=c, auth=self._auth[repo_id], remote=remote, repository=self._repos[repo_id]['name']))
                     storage = self._remote_snippets
                 else:
                     snippets.append(self._snippet(contents=c, remote=remote))

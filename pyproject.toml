@@ -29,7 +29,6 @@ keywords = ["code snippets", "extensible", "plugin", "dynamic loading"]
 requires-python = ">=3.7"
 dependencies = [
     "pyyaml>=6.0.1",
-    "packaging>=23.0",
     "tqdm>=4.66.1",
     "requests>=2.31.0"
 ]
